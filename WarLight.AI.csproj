@@ -113,6 +113,7 @@
     <Compile Include="Prod\MakeOrders\ResolveTeamBonuses.cs" />
     <Compile Include="Prod\MakeOrders\UtilizeSpareArmies.cs" />
     <Compile Include="Prod\CaptureTerritories.cs" />
+    <Compile Include="Snowbird\BotMain.cs" />
     <Compile Include="Wunderwaffe\BasicAlgorithms\DistanceCalculator.cs" />
     <Compile Include="Wunderwaffe\Bot\BotBonus.cs" />
     <Compile Include="Common\AIGamesParser.cs" />
