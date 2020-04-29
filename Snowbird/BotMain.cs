@@ -62,13 +62,54 @@ namespace WarLight.Shared.AI.Snowbird
             return whyNot.Length == 0;
         }
 
+        public GameStanding DistributionStandingOpt;
+        public GameStanding Standing;
+        public PlayerIDType PlayerID;
+        public Dictionary<PlayerIDType, GamePlayer> Players;
+
+        public MapDetails Map;
+        public GameSettings Settings;
+        public Dictionary<PlayerIDType, TeammateOrders> TeammatesOrders;
+        public List<CardInstance> Cards;
+        public int CardsMustPlay;
+        public Dictionary<PlayerIDType, PlayerIncome> Incomes;
+
+        public PlayerIncome BaseIncome;
+        public PlayerIncome EffectiveIncome;
+
+        public List<GamePlayer> Opponents;
+        public bool IsFFA; //if false, we're in a 1v1, 2v2, 3v3, etc.  If false, there are more than two entities still alive in the game.  A game can change from FFA to non-FFA as players are eliminated.
+        //public Dictionary<PlayerIDType, Neighbor> Neighbors;
+        public Dictionary<PlayerIDType, int> WeightedNeighbors;
+        public HashSet<TerritoryIDType> AvoidTerritories = new HashSet<TerritoryIDType>(); //we're conducting some sort of operation here, such as a a blockade, so avoid attacking or deploying more here.
+        private Stopwatch Timer;
+        public List<string> Directives;
+
         /// <inheritdoc/>
         public void Init(GameIDType gameID, PlayerIDType myPlayerID, Dictionary<PlayerIDType, GamePlayer> players, MapDetails map, 
             GameStanding distributionStanding, GameSettings gameSettings, int numberOfTurns, Dictionary<PlayerIDType, 
             PlayerIncome> incomes, GameOrder[] prevTurn, GameStanding latestTurnStanding, GameStanding previousTurnStanding, 
             Dictionary<PlayerIDType, TeammateOrders> teammatesOrders, List<CardInstance> cards, int cardsMustPlay, Stopwatch timer, List<string> directives)
         {
-
+            this.DistributionStandingOpt = distributionStanding;
+            this.Standing = latestTurnStanding;
+            this.PlayerID = myPlayerID;
+            this.Players = players;
+            this.Map = map;
+            this.Settings = gameSettings;
+            this.TeammatesOrders = teammatesOrders;
+            this.Cards = cards;
+            this.CardsMustPlay = cardsMustPlay;
+            this.Incomes = incomes;
+            this.BaseIncome = Incomes[PlayerID];
+            this.EffectiveIncome = this.BaseIncome.Clone();
+            //this.Neighbors = players.Keys.ExceptOne(PlayerID).ConcatOne(TerritoryStanding.NeutralPlayerID).ToDictionary(o => o, o => new Neighbor(this, o));
+            //this.Opponents = players.Values.Where(o => o.State == GamePlayerState.Playing && !IsTeammateOrUs(o.ID)).ToList();
+            this.IsFFA = Opponents.Count > 1 && (Opponents.Any(o => o.Team == PlayerInvite.NoTeam) || Opponents.GroupBy(o => o.Team).Count() > 1);
+            //this.WeightedNeighbors = WeightNeighbors();
+            this.Timer = timer;
+            this.Directives = directives;
+            AILog.Log("BotMain", "Snowbird initialized.  Starting at " + timer.Elapsed.TotalSeconds + " seconds");
         }
 
         public List<TerritoryIDType> GetPicks()
@@ -78,6 +119,11 @@ namespace WarLight.Shared.AI.Snowbird
 
         public List<GameOrder> GetOrders()
         {
+            var myTerritories = this.Standing.Territories.Values.Where((o) => o.OwnerPlayerID == this.PlayerID);
+            var myIDs = myTerritories.Select(o => o.ID);
+            var myDetails = myTerritories.Select((o) => this.Map.Territories[o.ID]);
+            var possibleExpansions = myDetails.Select(o => o.ConnectedTo.Keys.Where(s => !myIDs.Contains(s)));
+            var rewards = possibleExpansions..Select(o => o.Sum(s => this.Map.Territories[s].PartOfBonuses.Sum(t => this.Map.Bonuses[t].Amount)));
             return new List<GameOrder>();
         }
     }
