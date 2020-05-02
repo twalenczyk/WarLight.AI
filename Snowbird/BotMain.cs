@@ -131,7 +131,7 @@ namespace WarLight.Shared.AI.Snowbird
         public void TestParser()
         {
             // Test parser
-            this.MapModel = new MapModels((MapIDType) 10);
+            this.MapModel = new MapModels((MapIDType) 2);
             var list = this.MapModel.GetStandingArmyProbabilities(new List<TerritoryIDType>(), 1);
         }
     }

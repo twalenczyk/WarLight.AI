@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using WarLight.Shared.AI.Common.Util;
 
 namespace WarLight.Shared.AI.Snowbird
 {
@@ -14,6 +15,8 @@ namespace WarLight.Shared.AI.Snowbird
         public static List<Dictionary<TerritoryIDType, double>> GetStandingArmyMean(MapIDType mapID)
         {
             var comprehensive = new List<Dictionary<TerritoryIDType, List<double>>>();
+            var ret = new List<Dictionary<TerritoryIDType, double>>();
+
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Maps");
             var fp = Path.Combine(dir, mapID.GetValue().ToString());
             if (File.Exists(fp))
@@ -54,22 +57,25 @@ namespace WarLight.Shared.AI.Snowbird
                             {
                                 comprehensive[turnNumber].Add(id, new List<double>());
                             }
-                            comprehensive[turnNumber][id].Add(armies); // assumes the chunks are ordered in ascending turn order
+                            comprehensive[turnNumber][id].Add(armies);
                         }
                     }
                 }
-            }
 
-            var ret = new List<Dictionary<TerritoryIDType, double>>();
-            foreach (var dict in comprehensive)
-            {
-                ret.Add(new Dictionary<TerritoryIDType, double>());
-                foreach (var key in dict.Keys)
+                // convert to averagess
+                foreach (var dict in comprehensive)
                 {
-                    var retDict = ret.Last();
-                    retDict[key] = dict[key].Average();
+                    ret.Add(new Dictionary<TerritoryIDType, double>());
+                    foreach (var key in dict.Keys)
+                    {
+                        var retDict = ret.Last();
+                        retDict[key] = dict[key].Average();
+                    }
                 }
+
+                DataCollector.WriteMapStandingArmyData(ret, mapID);
             }
+            
 
             return ret;
         }

@@ -18,11 +18,34 @@ namespace WarLight.Shared.AI.Common.Util
         public static int currentGameID;
         public static int currentTurnNumber;
 
-        public static void WriteStandingArmyData(IEnumerable<KeyValuePair<TerritoryIDType, int>> armies)
+        public static void WriteStandingArmyData(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies)
         {
             // create the JSON object for the turn.
+            var data = DataCollector.CreateStandingArmyJson(armies);
+
+            // Append data to file
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Games");
+            var gamePath = Path.Combine(dir, currentGameID.ToString() + ".txt");
+            AppendToFile(data.ToString() + '!', dir, gamePath);
+        }
+
+        public static void WriteMapStandingArmyData(List<Dictionary<TerritoryIDType, double>> armies, MapIDType mapID)
+        {
+            // create the JSON object for the turn.
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Maps");
             var armyData = new JArray();
-            foreach (KeyValuePair<TerritoryIDType, int> kvp in armies)
+            foreach (Dictionary<TerritoryIDType, double> dict in armies)
+            {
+                var data = DataCollector.CreateStandingArmyJson(dict.ToList());
+                var gamePath = Path.Combine(dir, ((int)mapID).ToString() + ".txt");
+                AppendToFile(data.ToString() + '!', dir, gamePath);
+            }
+        }
+
+        private static JObject CreateStandingArmyJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies)
+        {
+            var armyData = new JArray();
+            foreach (KeyValuePair<TerritoryIDType, double> kvp in armies)
             {
                 var entry = new JObject();
                 entry["territoryID"] = (int)kvp.Key;
@@ -34,13 +57,14 @@ namespace WarLight.Shared.AI.Common.Util
             data["turnNumber"] = currentTurnNumber;
             data["borderArmies"] = armyData;
 
-            // Append data to file
-            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Games");
+            return data;
+        }
+
+        private static void AppendToFile(string content, string dir, string filename)
+        {
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
-
-            var gamePath = Path.Combine(dir, currentGameID.ToString() + ".txt");
-            File.AppendAllText(gamePath, data.ToString() + "!");
+            File.AppendAllText(content, content);
         }
     }
 }
