@@ -132,7 +132,9 @@ namespace WarLight.Shared.AI.Snowbird
         {
             // Test parser
             this.MapModel = new MapModels((MapIDType) 2);
-            var list = this.MapModel.GetStandingArmyProbabilities(new List<TerritoryIDType>(), 1);
+            var meanStandingArmies = this.MapModel.GetStandingArmyProbabilities(new List<TerritoryIDType>(), 1);
+            /*var varianceStandingArmies;
+            var correlationStandingArmies;*/
         }
     }
 }
