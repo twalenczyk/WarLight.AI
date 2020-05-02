@@ -64,7 +64,7 @@ namespace WarLight.Shared.AI.Common.Util
         {
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
-            File.AppendAllText(content, content);
+            File.AppendAllText(content, Path.Combine(dir, filename));
         }
     }
 }
