@@ -25,7 +25,7 @@ namespace WarLight.Shared.AI.Common.Util
 
             // Append data to file
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Games");
-            var gamePath = Path.Combine(dir, currentGameID.ToString() + ".txt");
+            var gamePath = currentGameID.ToString() + ".txt";
             AppendToFile(data.ToString() + '!', dir, gamePath);
         }
 
@@ -37,7 +37,7 @@ namespace WarLight.Shared.AI.Common.Util
             foreach (Dictionary<TerritoryIDType, double> dict in armies)
             {
                 var data = DataCollector.CreateStandingArmyJson(dict.ToList());
-                var gamePath = Path.Combine(dir, ((int)mapID).ToString() + ".txt");
+                var gamePath = ((int)mapID).ToString() + ".txt";
                 AppendToFile(data.ToString() + '!', dir, gamePath);
             }
         }
