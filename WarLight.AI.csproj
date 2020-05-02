@@ -33,6 +33,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -67,6 +71,7 @@
     <Compile Include="Common\PlayHuman.cs" />
     <Compile Include="Common\IWarLightAI.cs" />
     <Compile Include="Common\Compete.cs" />
+    <Compile Include="Common\Util\DataCollector.cs" />
     <Compile Include="Common\Util\KeyValueList.cs" />
     <Compile Include="Cowzow\Bot\BonusAnalyzer.cs" />
     <Compile Include="Cowzow\Bot\CowzowBot.cs" />
@@ -114,6 +119,8 @@
     <Compile Include="Prod\MakeOrders\UtilizeSpareArmies.cs" />
     <Compile Include="Prod\CaptureTerritories.cs" />
     <Compile Include="Snowbird\BotMain.cs" />
+    <Compile Include="Snowbird\MapModels.cs" />
+    <Compile Include="Snowbird\Parser.cs" />
     <Compile Include="Wunderwaffe\BasicAlgorithms\DistanceCalculator.cs" />
     <Compile Include="Wunderwaffe\Bot\BotBonus.cs" />
     <Compile Include="Common\AIGamesParser.cs" />

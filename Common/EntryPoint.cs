@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WarLight.Shared.AI.Common.Util;
 
 namespace WarLight.Shared.AI
 {
@@ -108,6 +109,10 @@ Supported bot names: " + BotFactory.Names.JoinStrings(", "));
                 case "stresstest":
                     StressTest.Go(args.Skip(1).ToArray());
                     break;
+                case "test":
+                    var blank = new Snowbird.BotMain();
+                    blank.TestParser();
+                    break;
                 default:
                     PrintHelp();
                     break;
@@ -131,6 +136,11 @@ Supported bot names: " + BotFactory.Names.JoinStrings(", "));
             bot.Init(game.ID, playerID, game.Players, map, game.LatestInfo.DistributionStanding, settings, game.NumberOfTurns, game.LatestInfo.Income, game.LatestInfo.LatestTurn == null ? null : game.LatestInfo.LatestTurn.Orders, game.LatestInfo.LatestStanding, game.LatestInfo.PreviousTurnStanding, game.LatestInfo.TeammatesOrders, game.LatestInfo.Cards, game.LatestInfo.CardsMustUse, Stopwatch.StartNew(), new List<string>());
 
             AILog.Log("PlayGame", "State=" + game.State + ", numTurns=" + game.NumberOfTurns + ", income=" + game.LatestInfo.Income[playerID] + ", cardsMustUse=" + game.LatestInfo.CardsMustUse);
+
+            // Override some settings for the data collector
+            DataCollector.currentGameID = game.ID.GetValue();
+            DataCollector.currentTurnNumber = game.NumberOfTurns;
+
 
             if (game.State == GameState.DistributingTerritories)
                 sendPicks(_speeds.GetOrAdd(botName, _ => new Speeds()).Record(true, () => bot.GetPicks()));

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using WarLight.Shared.AI.Common.Util;
 
 namespace WarLight.Shared.AI.Prod.MakeOrders
 {
@@ -16,6 +17,10 @@ namespace WarLight.Shared.AI.Prod.MakeOrders
 
             var attackableTerritories = Bot.Standing.Territories.Values.
                 Where(o => bot.Map.Territories[o.ID].ConnectedTo.Keys.Any(c => bot.Standing.Territories[c].OwnerPlayerID == bot.PlayerID && !bot.AvoidTerritories.Contains(c)));
+
+            // Write the data for data collector
+            var info = attackableTerritories.Select(territory => new KeyValuePair<TerritoryIDType, int>(territory.ID, territory.NumArmies.NumArmies));
+            DataCollector.WriteStandingArmyData(info);
 
             var terrs = attackableTerritories.Where(o => o.IsNeutral || o.OwnerPlayerID == TerritoryStanding.FogPlayerID).Select(o => o.ID).ToHashSet(false);
             AttackableNeutrals = GetExpansionWeights(terrs);

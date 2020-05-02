@@ -84,6 +84,7 @@ namespace WarLight.Shared.AI.Snowbird
         public HashSet<TerritoryIDType> AvoidTerritories = new HashSet<TerritoryIDType>(); //we're conducting some sort of operation here, such as a a blockade, so avoid attacking or deploying more here.
         private Stopwatch Timer;
         public List<string> Directives;
+        private MapModels MapModel;
 
         /// <inheritdoc/>
         public void Init(GameIDType gameID, PlayerIDType myPlayerID, Dictionary<PlayerIDType, GamePlayer> players, MapDetails map, 
@@ -105,7 +106,7 @@ namespace WarLight.Shared.AI.Snowbird
             this.EffectiveIncome = this.BaseIncome.Clone();
             //this.Neighbors = players.Keys.ExceptOne(PlayerID).ConcatOne(TerritoryStanding.NeutralPlayerID).ToDictionary(o => o, o => new Neighbor(this, o));
             //this.Opponents = players.Values.Where(o => o.State == GamePlayerState.Playing && !IsTeammateOrUs(o.ID)).ToList();
-            this.IsFFA = Opponents.Count > 1 && (Opponents.Any(o => o.Team == PlayerInvite.NoTeam) || Opponents.GroupBy(o => o.Team).Count() > 1);
+            this.IsFFA = true; // Opponents.Count > 1 && (Opponents.Any(o => o.Team == PlayerInvite.NoTeam) || Opponents.GroupBy(o => o.Team).Count() > 1);
             //this.WeightedNeighbors = WeightNeighbors();
             this.Timer = timer;
             this.Directives = directives;
@@ -119,12 +120,19 @@ namespace WarLight.Shared.AI.Snowbird
 
         public List<GameOrder> GetOrders()
         {
-            var myTerritories = this.Standing.Territories.Values.Where((o) => o.OwnerPlayerID == this.PlayerID);
+            /*var myTerritories = this.Standing.Territories.Values.Where((o) => o.OwnerPlayerID == this.PlayerID);
             var myIDs = myTerritories.Select(o => o.ID);
             var myDetails = myTerritories.Select((o) => this.Map.Territories[o.ID]);
             var possibleExpansions = myDetails.Select(o => o.ConnectedTo.Keys.Where(s => !myIDs.Contains(s)));
-            var rewards = possibleExpansions..Select(o => o.Sum(s => this.Map.Territories[s].PartOfBonuses.Sum(t => this.Map.Bonuses[t].Amount)));
+            var rewards = possibleExpansions..Select(o => o.Sum(s => this.Map.Territories[s].PartOfBonuses.Sum(t => this.Map.Bonuses[t].Amount)));*/
             return new List<GameOrder>();
+        }
+
+        public void TestParser()
+        {
+            // Test parser
+            this.MapModel = new MapModels((MapIDType) 10);
+            var list = this.MapModel.GetStandingArmyProbabilities(new List<TerritoryIDType>(), 1);
         }
     }
 }
