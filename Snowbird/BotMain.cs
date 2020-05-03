@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace WarLight.Shared.AI.Snowbird
 {
@@ -140,7 +141,105 @@ namespace WarLight.Shared.AI.Snowbird
             this.StandingArmiesMean = this.MapModel.GetStandingArmyMean(territories, 1);
             this.StandingArmiesVariance = this.MapModel.GetStandingArmyVariances(territories, 1);
             this.StandingArmiesCorrelations = this.MapModel.GetStandingArmyCorrelations(new List<TerritoryIDType>(), 1);
-            // var correlationStandingArmies;
+
+            // define the mean vector
+            var meanArr = this.StandingArmiesMean.Select(kvp => kvp.Value).ToArray();
+            Vector<double> mu = DenseVector.OfArray(meanArr);
+
+            // define the covariance matrix
+            var corrBase = this.StandingArmiesCorrelations.Select(kvp => kvp.Value.Select(pvk => pvk.Value).ToArray()).ToArray();
+            var gBase = new double[corrBase.Length, corrBase.Length];
+            for (var i = 0; i < corrBase.Length; i++)
+            {
+                var iSig = this.StandingArmiesVariance[territories[i]];
+                for (var j = 0; j < corrBase.Length; j++)
+                {
+                    var jSig = this.StandingArmiesVariance[territories[j]];
+                    gBase[i, j] = corrBase[i][j] * iSig * jSig;
+                }
+            }
+            Matrix<double> G = DenseMatrix.OfArray(gBase);
+
+            // develop (equality-constraint) matrix A
+            // For starters, we simply care that the vector sums to 1 (not explicitly worrying about positivity).
+            var aBase = new double[1, mu.Count];
+            for (var i = 0; i < mu.Count; i++)
+            {
+                aBase[0, i] = 1;
+            }
+            Matrix<double> A = DenseMatrix.OfArray(aBase);
+
+            // define the solution vector
+            var bBase = new double[1];
+            bBase[0] = 1;
+            Vector<double> b = DenseVector.OfArray(bBase);
+
+            this.ComputeOptimalDistribution(A, b, mu, G);
+        }
+
+        private void ComputeOptimalDistribution(Matrix<double> A, Vector<double> b, Vector<double> mu, Matrix<double> G)
+        {
+            // Algorithm 16.4
+            var m = A.RowCount;
+
+            // define starting point, then form good starting value
+            var xBarBase = new double[mu.Count];
+            var yBarBase = new double[mu.Count];
+            var lamBarBase = new double[mu.Count];
+
+            for (var i = 0; i < mu.Count; i++)
+            {
+                if (i == 0)
+                {
+                    // satisfies KKT conditions since b
+                    xBarBase[0] = 1;
+                    yBarBase[0] = 0;
+                    lamBarBase[0] = 0;
+                }
+                else if(i == 1)
+                {
+                    xBarBase[1] = 0;
+                    yBarBase[1] = -1;
+                    lamBarBase[1] = 0;
+                }
+                else
+                {
+                    // TODO take a clsoer look here
+                    xBarBase[i] = yBarBase[i] = lamBarBase[i] = 0;
+                }
+            }
+
+            Vector<double> xBar = DenseVector.OfArray(xBarBase);
+            Vector<double> yBar = DenseVector.OfArray(yBarBase);
+            Vector<double> lamBar = DenseVector.OfArray(lamBarBase);
+
+            // find the affine scaling measures
+            Matrix<double> Y = DenseMatrix.OfDiagonalArray(yBarBase);
+            Matrix<double> Delta = DenseMatrix.OfDiagonalArray(yBarBase);
+            Vector<double> e = DenseVector.OfEnumerable(mu.Select(val => 1.0)); // quick creation of the all 1 vector
+
+            var cols = G.ColumnCount + Delta.ColumnCount + Y.ColumnCount;
+            var rows = G.RowCount + A.RowCount + Y.RowCount;
+            Matrix<double> newtonSystem = DenseMatrix.OfDiagonalArray(e.Select(val => -1.0).ToArray());
+            newtonSystem.SetSubMatrix(0, 0, G);
+            newtonSystem.SetSubMatrix(0, G.ColumnCount + Delta.ColumnCount, A.Transpose().Multiply(-1));
+            newtonSystem.SetSubMatrix(G.RowCount, 0, A);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount, Delta);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount + Delta.ColumnCount, Y);
+
+            // perform newton's method to get the affine values
+            var compMeasure = yBar.DotProduct(lamBar) / m;
+            var sigma = 1; // TODO update!
+            var rd = G * xBar - A.Transpose() * lamBar + mu;
+            var rp = A * xBar - yBar - b;
+
+            var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(Delta * (Y * e.Multiply(-1)) + e.Multiply(sigma * compMeasure)));
+
+            // actually perform newtons method
+
+            // TODO implement!
+
+
         }
     }
 }
