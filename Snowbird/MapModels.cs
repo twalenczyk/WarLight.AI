@@ -32,7 +32,7 @@ namespace WarLight.Shared.AI.Snowbird
         }
 
         public Dictionary<TerritoryIDType, double> GetStandingArmyVariances(IEnumerable<TerritoryIDType> territories, int turnNumber) {
-            if (!(StandingArmiesPerTurnVariance is List<Dictionary<TerritoryIDType, double>>))
+            if (!(this.StandingArmiesPerTurnVariance is List<Dictionary<TerritoryIDType, double>>))
             {
                 // initialize the vector
                 var standingArmiesComprehensive = Parser.GetStandingArmyComprehensive(this.MapID);
@@ -48,9 +48,7 @@ namespace WarLight.Shared.AI.Snowbird
                     {
                         var territoryID = kvp.Key;
                         var relevantMean = this.StandingArmiesPerTurnMean[i][territoryID];
-                        var varianceVector = kvp.Value;
-                        varianceVector.ForEach(value => Math.Pow(relevantMean - value, 2));
-                        var variance = varianceVector.Average();
+                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Average();
                         this.StandingArmiesPerTurnVariance[i].Add(territoryID, variance);
                     }
                 }
@@ -58,6 +56,76 @@ namespace WarLight.Shared.AI.Snowbird
 
             var turn = turnNumber >= this.StandingArmiesPerTurnMean.Count ? this.StandingArmiesPerTurnMean.Count - 1 : turnNumber; // heuristic
             return this.StandingArmiesPerTurnVariance[turn];
-        }    
+        }
+
+        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetStandingArmyCorrelations(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        {
+            if (!(this.StandingArmiesPerTurnCorrelations is List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>))
+            {
+                // initialize the matrix
+                if (!(this.StandingArmiesPerTurnMean is List<Dictionary<TerritoryIDType, double>>))
+                {
+                    _ = this.GetStandingArmyMean(territories, turnNumber);
+                }
+
+                if (!(this.StandingArmiesPerTurnVariance is List<Dictionary<TerritoryIDType, double>>))
+                {
+                    _ = this.GetStandingArmyVariances(territories, turnNumber);
+                }
+
+                // considering caching to improve performance
+                var standingArmiesComprehensive = Parser.GetStandingArmyComprehensive(this.MapID);
+                var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+
+                // set up the new random variable matrix
+                for (var index = 0; index < standingArmiesComprehensive.Count; index++)
+                {
+                    correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    // per turn, calculate the expected value of the correlation
+                    var armyData = standingArmiesComprehensive[index];
+                    foreach (var ikvp in armyData)
+                    {
+                        var i = ikvp.Key;
+                        var iMean = this.StandingArmiesPerTurnMean[index][i];
+                        var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
+                        correlationRandomVariables[index].Add(i, new Dictionary<TerritoryIDType, double>());
+
+                        foreach (var jkvp in armyData)
+                        {
+                            var j = jkvp.Key;
+                            var jMean = this.StandingArmiesPerTurnMean[index][j];
+                            var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
+
+                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Average();
+                            correlationRandomVariables[index][i][j] = ijCorrMean;
+                        }
+                    }
+                }
+
+                this.StandingArmiesPerTurnCorrelations = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+
+                // correlation between the two random variables for each turn
+                for (var index = 0; index < this.StandingArmiesPerTurnMean.Count; index++)
+                {
+                    this.StandingArmiesPerTurnCorrelations.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+
+                    // improve efficienes by storing ij = ji
+                    foreach (var i in territories)
+                    {
+                        this.StandingArmiesPerTurnCorrelations[index].Add(i, new Dictionary<TerritoryIDType, double>());
+                        foreach (var j in territories)
+                        {
+                            var iSig = this.StandingArmiesPerTurnVariance[index][i];
+                            var jSig = this.StandingArmiesPerTurnVariance[index][j];
+                            var correlationValue = correlationRandomVariables[index][i][j] / (iSig * jSig);
+                            this.StandingArmiesPerTurnCorrelations[index][i][j] = correlationValue;
+                        }
+                    }
+                }
+            }
+
+            var turn = turnNumber >= this.StandingArmiesPerTurnCorrelations.Count ? this.StandingArmiesPerTurnCorrelations.Count - 1 : turnNumber; // heuristic
+            return this.StandingArmiesPerTurnCorrelations[turn];
+        }
     }
 }

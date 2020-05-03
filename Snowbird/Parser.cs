@@ -131,7 +131,7 @@ namespace WarLight.Shared.AI.Snowbird
                     foreach (var border in borderArmies)
                     {
                         var id = (TerritoryIDType)border["territoryID"].Value<int>();
-                        var armies = border["armies"].Value<List<double>>();
+                        var armies = border["armies"].Select(token => token.Value<double>()).ToList();
                         ret[turnNumber].Add(id, armies);
                     }
                 }
