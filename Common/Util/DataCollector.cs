@@ -21,7 +21,7 @@ namespace WarLight.Shared.AI.Common.Util
         public static void WriteStandingArmyData(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies)
         {
             // create the JSON object for the turn.
-            var data = DataCollector.CreateStandingArmyJson(armies);
+            var data = DataCollector.CreateStandingArmyJson(armies, currentTurnNumber);
 
             // Append data to file
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Games");
@@ -34,15 +34,16 @@ namespace WarLight.Shared.AI.Common.Util
             // create the JSON object for the turn.
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Maps");
             var armyData = new JArray();
-            foreach (Dictionary<TerritoryIDType, double> dict in armies)
+            for (var i = 0; i < armies.Count; i++)
             {
-                var data = DataCollector.CreateStandingArmyJson(dict.ToList());
+                var dict = armies[i];
+                var data = DataCollector.CreateStandingArmyJson(dict.ToList(), i);
                 var gamePath = ((int)mapID).ToString() + ".txt";
                 AppendToFile(data.ToString() + '!', dir, gamePath);
             }
         }
 
-        private static JObject CreateStandingArmyJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies)
+        private static JObject CreateStandingArmyJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
         {
             var armyData = new JArray();
             foreach (KeyValuePair<TerritoryIDType, double> kvp in armies)
@@ -54,7 +55,7 @@ namespace WarLight.Shared.AI.Common.Util
             }
 
             var data = new JObject();
-            data["turnNumber"] = currentTurnNumber;
+            data["turnNumber"] = turnNumber;
             data["borderArmies"] = armyData;
 
             return data;

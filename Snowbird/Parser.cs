@@ -18,7 +18,7 @@ namespace WarLight.Shared.AI.Snowbird
             var ret = new List<Dictionary<TerritoryIDType, double>>();
 
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Maps");
-            var fp = Path.Combine(dir, mapID.GetValue().ToString());
+            var fp = Path.Combine(dir, mapID.GetValue().ToString() + ".txt");
             if (File.Exists(fp))
             {
                 // Simply parse the relevant file
