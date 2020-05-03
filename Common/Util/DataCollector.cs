@@ -42,6 +42,33 @@ namespace WarLight.Shared.AI.Common.Util
                 AppendToFile(data.ToString() + '!', dir, gamePath);
             }
         }
+        
+        public static void WriteMapStandingArmyComprehensiveData(List<Dictionary<TerritoryIDType, List<double>>> armies, MapIDType mapID) 
+        {
+            // create the JSON object for the turn.
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Maps//Comprehensive");
+            for (var i = 0; i < armies.Count; i++)
+            {
+                var dict = armies[i];
+                var armyData = new JArray();
+
+                foreach (var kvp in dict)
+                {
+                    var entry = new JObject();
+                    entry["territoryID"] = (int)kvp.Key;
+                    entry["armies"] = new JArray(kvp.Value);
+
+                    armyData.Add(entry);
+                }
+
+                var data = new JObject();
+                data["turnNumber"] = i;
+                data["borderArmies"] = armyData;
+
+                var gamePath = ((int)mapID).ToString() + ".txt";
+                AppendToFile(data.ToString() + '!', dir, gamePath);
+            }
+        }
 
         private static JObject CreateStandingArmyJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
         {

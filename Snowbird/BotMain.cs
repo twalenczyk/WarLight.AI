@@ -85,6 +85,9 @@ namespace WarLight.Shared.AI.Snowbird
         private Stopwatch Timer;
         public List<string> Directives;
         private MapModels MapModel;
+        private Dictionary<TerritoryIDType, double> StandingArmiesMean;
+        private Dictionary<TerritoryIDType, double> StandingArmiesVariance;
+        private Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> StandingArmiesCorrelations;
 
         /// <inheritdoc/>
         public void Init(GameIDType gameID, PlayerIDType myPlayerID, Dictionary<PlayerIDType, GamePlayer> players, MapDetails map, 
@@ -110,6 +113,7 @@ namespace WarLight.Shared.AI.Snowbird
             //this.WeightedNeighbors = WeightNeighbors();
             this.Timer = timer;
             this.Directives = directives;
+
             AILog.Log("BotMain", "Snowbird initialized.  Starting at " + timer.Elapsed.TotalSeconds + " seconds");
         }
 
@@ -132,9 +136,14 @@ namespace WarLight.Shared.AI.Snowbird
         {
             // Test parser
             this.MapModel = new MapModels((MapIDType) 2);
-            var meanStandingArmies = this.MapModel.GetStandingArmyProbabilities(new List<TerritoryIDType>(), 1);
+            this.StandingArmiesMean = this.MapModel.GetStandingArmyMean(new List<TerritoryIDType>(), 1);
             /*var varianceStandingArmies;
             var correlationStandingArmies;*/
+        }
+
+        private void CalculateStandingArmyVariance() 
+        {
+            
         }
     }
 }
