@@ -21,8 +21,29 @@ namespace WarLight.Shared.AI.Snowbird
             var fp = Path.Combine(dir, mapID.GetValue().ToString());
             if (File.Exists(fp))
             {
-                //
-                var data = File.ReadAllText(fp);
+                // Simply parse the relevant file
+                var text = File.ReadAllText(Path.Combine(fp));
+                text = text.Replace("\n", string.Empty).Replace("\r", string.Empty);
+                var check = text.Split('!');
+                foreach (var chunk in text.Split('!').Where(s => s != string.Empty))
+                {
+                    var data = JObject.Parse(chunk);
+                    var turnNumber = data["turnNumber"].Value<int>();
+                    var borderArmies = data["borderArmies"];
+
+                    // in case turn numbers are unordered/missing
+                    for (var i = comprehensive.Count; i <= turnNumber; i++)
+                    {
+                        ret.Add(new Dictionary<TerritoryIDType, double>());
+                    }
+
+                    foreach (var border in borderArmies)
+                    {
+                        var id = (TerritoryIDType)border["territoryID"].Value<int>();
+                        var armies = border["armies"].Value<double>();
+                        ret[turnNumber].Add(id, armies);
+                    }
+                }
             }
             else
             {
@@ -37,7 +58,6 @@ namespace WarLight.Shared.AI.Snowbird
                     var check = text.Split('!');
                     foreach (var chunk in text.Split('!').Where(s => s != string.Empty))
                     {
-                        // trim the chunk
                         var data = JObject.Parse(chunk);
                         var turnNumber = data["turnNumber"].Value<int>();
                         var borderArmies = data["borderArmies"];
