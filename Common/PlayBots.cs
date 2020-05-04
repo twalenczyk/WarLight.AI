@@ -117,6 +117,11 @@ namespace WarLight.Shared.AI
                     {
                         var pg = BotGameAPI.GetGameInfo(gameID, player.ID);
 
+                        /*
+                         * Collecting data here will tell me the result of a turn.
+                         * Recording data in the play game section let's me determine certain things (e.g. attack/defense power from a players perspective).
+                         */
+
                         EntryPoint.PlayGame(botsDict[player.ID], pg, player.ID, settings.Item1, settings.Item2, picks => BotGameAPI.SendPicks(pg.ID, player.ID, picks), orders => BotGameAPI.SendOrders(pg.ID, player.ID, orders, pg.NumberOfTurns + 1));
                     };
 

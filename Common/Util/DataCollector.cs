@@ -70,6 +70,38 @@ namespace WarLight.Shared.AI.Common.Util
             }
         }
 
+        public static void WriteGameAttackDeploymentData(TerritoryIDType terrID, int armiesDeployed, MapIDType mapID)
+        {
+            // get map id somehow
+            var entry = new JObject();
+            entry["territoryID"] = (int)terrID;
+            entry["armiesDeployed"] = armiesDeployed;
+
+            var turnData = new JObject();
+            turnData["turnNumber"] = currentTurnNumber;
+            turnData["deployment"] = entry;
+
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Raw//Maps//" + mapID.ToString() + "//AttackDeployments");
+            var gamePath = currentGameID.ToString() + ".txt";
+            AppendToFile(turnData.ToString(), dir, gamePath);
+        }
+
+        public static void WriteGameDefenseDeploymentData(TerritoryIDType terrID, int armiesDeployed, MapIDType mapID)
+        {
+            // get map id somehow
+            var entry = new JObject();
+            entry["territoryID"] = (int)terrID;
+            entry["armiesDeployed"] = armiesDeployed;
+
+            var turnData = new JObject();
+            turnData["turnNumber"] = currentTurnNumber;
+            turnData["deployment"] = entry;
+
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Raw//Maps//" + mapID.ToString() + "//DefenseDeployments");
+            var gamePath = currentGameID.ToString() + ".txt";
+            AppendToFile(turnData.ToString(), dir, gamePath);
+        }
+
         private static JObject CreateStandingArmyJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
         {
             var armyData = new JArray();

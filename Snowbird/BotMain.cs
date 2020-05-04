@@ -196,7 +196,11 @@ namespace WarLight.Shared.AI.Snowbird
 
             // generate a random non-singular matrix for testing
             G = CreateMatrix.RandomPositiveDefinite<double>(G.ColumnCount);
-            var deployments = this.ComputeOptimalDistribution(A, b, mu, G);
+            var deploymentDistribution = this.ComputeOptimalDistribution(A, b, mu, G);
+            var dict = deploymentDistribution.Zip(territories, (dist, terr) => new KeyValuePair<TerritoryIDType, double>(terr, dist)).ToDictionary(pair => pair.Key);
+
+            // Convert the distribution to integer orders
+            // submit orders.
         }
 
         private Vector<double> ComputeOptimalDistribution(Matrix<double> A, Vector<double> b, Vector<double> mu, Matrix<double> G)

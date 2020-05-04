@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using WarLight.Shared.AI.Common.Util;
 
-namespace WarLight.Shared.AI.Prod.MakeOrders
+namespace WarLight.Shared.AI.Prod2.MakeOrders
 {
     public class DefendAttack
     {
@@ -100,11 +99,6 @@ namespace WarLight.Shared.AI.Prod.MakeOrders
             }
 
             AILog.Log("Defense", "Defended " + allDefenses.Count + " territories: " + allDefenses.OrderByDescending(o => o.Value).Select(o => Bot.TerrString(o.Key) + " with " + o.Value).JoinStrings(", "));
-
-            /*
-             * Record defense information to a text file here.
-             */
-            allDefenses.ForEach(o => DataCollector.WriteGameDefenseDeploymentData(o.Key, o.Value, Bot.Map.ID));
         }
 
         private void DoOffense(int armiesToOffense, List<PossibleAttack> orderedAttacks)
@@ -191,12 +185,6 @@ namespace WarLight.Shared.AI.Prod.MakeOrders
                 //Now issue the attack
                 Bot.Orders.AddAttack(attack.From, attack.To, AttackTransferEnum.AttackTransfer, attackWith, false, commanders: commanders);
                 AILog.Log("Offense", "Attacking from " + Bot.TerrString(attack.From) + " to " + Bot.TerrString(attack.To) + " with " + attackWith + " by deploying " + need);
-
-                /*
-                 * Record information about attack deployments here (need is the relevant data).
-                 * Turn order and game id have been set at this point.
-                 */
-                DataCollector.WriteGameAttackDeploymentData(attack.From, need, Bot.Map.ID);
             }
 
         }
@@ -212,6 +200,12 @@ namespace WarLight.Shared.AI.Prod.MakeOrders
                     .Where(k => Bot.IsOpponent(k.OwnerPlayerID) && !Bot.AvoidTerritories.Contains(k.ID))
                     .Select(k => new PossibleAttack(Bot, us.ID, k.ID))).ToList();
 
+
+            /*
+             * Instead of applying Fizzer's weighting function,
+             * employ an optimization method to method to weight the territories.
+             * Then, the list of weights will determine how many troops to deploy.
+             */
 
             foreach (PossibleAttack a in ret)
                 a.Weight(Bot.WeightedNeighbors);
