@@ -347,8 +347,10 @@ namespace WarLight.Shared.AI.Snowbird
 
             // actually perform newtons method
             Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 0.0);
-            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB, xStart);
-            
+            Func<Vector<double>, Vector<double>> f = z => x1Norm(newtonSystem, newtonB, z);
+            Func<Vector<double>, Matrix<double>> df = z => dx1Norm(newtonSystem, newtonB, z);
+            var scalingSteps = this.NewtonsMethod(f, df, xStart);
+
             // need I validate the result?
             return scalingSteps;
         }
@@ -384,37 +386,30 @@ namespace WarLight.Shared.AI.Snowbird
             var partC = e.Multiply(sigma * mu) - Lambda * (Y * e) - DeltaLambdaAff * (DeltaYAff * e);
             var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(partC));
 
-            // actually perform newtons method
+            // set up initial variables and lambda functions for Newton's method
             Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 0.0);
-            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB, xStart);
+            Func<Vector<double>, Vector<double>> f = z => x1Norm(newtonSystem, newtonB, z);
+            Func<Vector<double>, Matrix<double>> df = z => dx1Norm(newtonSystem, newtonB, z);
+            var scalingSteps = this.NewtonsMethod(f, df, xStart);
 
             // need I validate the result?
             return scalingSteps;
         }
 
-        private Vector<double> NewtonsMethod(Matrix<double> A, Vector<double> b, Vector<double> xStart)
+        private Vector<double> NewtonsMethod(Func<Vector<double>, Vector<double>> f, Func<Vector<double>, Matrix<double>> df, Vector<double> xStart)
         {
             // find the solution to Ax - b = 0
             // I'm not sure what the initial value should be
             var x = xStart; // initial guess is x = 0;
-            Func<Vector<double>, Vector<double>> f = z => A * z - b;
-            Func<Vector<double>, Matrix<double>> df = z =>
-            {
-                var retBase = new double[A.RowCount, A.ColumnCount];
-                for (int i = 0; i < A.RowCount; i++)
-                {
-                    for (int j = 0; j < A.ColumnCount; j++)
-                    {
-                        retBase[i, j] = A[i, j] * z[j];
-                    }
-                }
-                return DenseMatrix.OfArray(retBase);
-            };
             var fx = f(x);
+            var dfx = df(x);
             var tol = 0.000001;
             while (fx.Norm(2) > tol)
             {
-                x -= df(x).Inverse() * f(x); // right?
+                Vector<double> deltaX = dfx.Solve(fx.Multiply(-1));
+                x += deltaX;
+                fx = f(x);
+                dfx = df(x);
             }
 
             return x;
@@ -478,9 +473,20 @@ namespace WarLight.Shared.AI.Snowbird
         {
             return 2 * (x.Zip(y, (xi, yi) => xi * yi).Sum() + y.Sum(yi => alpha * yi * yi));
         }
+
         private double dda2Norm(Vector<double> x, Vector<double> y, double alpha)
         {
             return 2 * y.Sum(yi => yi * yi);
+        }
+
+        private Vector<double> x1Norm(Matrix<double> A, Vector<double> b, Vector<double> x)
+        {
+            return A * x - b;
+        }
+
+        private Matrix<double> dx1Norm(Matrix<double> A, Vector<double> b, Vector<double> x)
+        {
+            return A;
         }
 
         private Vector<double> GetDeltaX(Vector<double> tuple, int size)
