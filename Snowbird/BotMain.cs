@@ -174,10 +174,10 @@ namespace WarLight.Shared.AI.Snowbird
             bBase[0] = 1;
             Vector<double> b = DenseVector.OfArray(bBase);
 
-            this.ComputeOptimalDistribution(A, b, mu, G);
+            var deployments = this.ComputeOptimalDistribution(A, b, mu, G);
         }
 
-        private void ComputeOptimalDistribution(Matrix<double> A, Vector<double> b, Vector<double> mu, Matrix<double> G)
+        private Vector<double> ComputeOptimalDistribution(Matrix<double> A, Vector<double> b, Vector<double> mu, Matrix<double> G)
         {
             // Algorithm 16.4
             var m = A.RowCount;
@@ -219,15 +219,6 @@ namespace WarLight.Shared.AI.Snowbird
             Matrix<double> Lambda = DenseMatrix.OfDiagonalArray(yBarBase);
             Vector<double> e = DenseVector.OfEnumerable(mu.Select(val => 1.0)); // quick creation of the all 1 vector
 
-            var cols = G.ColumnCount + Lambda.ColumnCount + Y.ColumnCount;
-            var rows = G.RowCount + A.RowCount + Y.RowCount;
-            Matrix<double> newtonSystem = DenseMatrix.OfDiagonalArray(e.Select(val => -1.0).ToArray());
-            newtonSystem.SetSubMatrix(0, 0, G);
-            newtonSystem.SetSubMatrix(0, G.ColumnCount + Lambda.ColumnCount, A.Transpose().Multiply(-1));
-            newtonSystem.SetSubMatrix(G.RowCount, 0, A);
-            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount, Lambda);
-            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount + Lambda.ColumnCount, Y);
-
             // Get ahold of the initial affine step values to determine a good starting point.
             var compMeasure = yBar.DotProduct(lamBar) / m;
             var sigma = 0; // correct for the affine calculation per p. 484
@@ -252,6 +243,7 @@ namespace WarLight.Shared.AI.Snowbird
             var x_prev = xBar;
             var y_prev = DenseVector.OfArray(yBase);
             var lambda_prev = DenseVector.OfArray(lamBase); // update with correct affine index
+            Vector<double> totalSteps;
 
             // run the algorithm until?
             var tol = 0.000001;
@@ -268,18 +260,38 @@ namespace WarLight.Shared.AI.Snowbird
 
                 compMeasure = y.DotProduct(lambda) / m;
 
-                var alphaAffHat = this.LineSearch(y, lambda, this.GetDeltaY(affineTransforms, x.Count), this.GetDeltaLambda(affineTransforms, x.Count), tol);
+                var alphaAffHat = this.MaxAlphaHatAff(y, lambda, this.GetDeltaY(affineTransforms, x.Count), this.GetDeltaLambda(affineTransforms, x.Count), tol);
                 var compMeasureAff = (y + this.GetDeltaY(affineTransforms, xBar.Count).Multiply(alphaAffHat)).DotProduct(lambda + this.GetDeltaLambda(affineTransforms, xBar.Count).Multiply(alphaAffHat)) / m;
                 var centeringParam = Math.Pow(compMeasureAff / compMeasure, 3);
-                // get the new deltas
+
+                // Solve 16.67 for the new scaling steps
+                // I simply need to update the solution vector
+                totalSteps = this.GetTotalSteps(A, G, Lambda, Y, rd, rp, this.GetDeltaLambda(affineTransforms, x.Count), this.GetDeltaY(affineTransforms, x.Count), compMeasure, centeringParam);
+
+                // for simplicity, let taus be the same
+                var tauk = 0.5; // TODO: refine this selection (e.g.  as iterates increase, tauk --> 1).
+                var alphaTauPri = this.MaxAlphaTau(y, this.GetDeltaY(affineTransforms, x.Count), tauk, tol);
+                var alphaTauDual = this.MaxAlphaTau(lambda, this.GetDeltaLambda(affineTransforms, x.Count), tauk, tol);
+                var alphaHat = Math.Min(alphaTauPri, alphaTauDual);
+
                 // minimize  a new function
                 // update vector
                 x_prev = x;
-                // y_prev = y;
-                // lambda_prev = lambda;
+                y_prev = DenseVector.OfVector(y);
+                lambda_prev = DenseVector.OfVector(lambda);
 
-                distance = CreateVector.DenseOfEnumerable((x - x_prev).Concat(y - y_prev).Concat(lambda - lambda_prev));
-            } while (distance.Norm(2) > tol);
+                var distanceX = this.GetDeltaX(affineTransforms, x.Count).Multiply(alphaHat);
+                var distanceY = this.GetDeltaY(affineTransforms, x.Count).Multiply(alphaHat);
+                var distanceLambda = this.GetDeltaLambda(affineTransforms, x.Count).Multiply(alphaHat);
+
+                x += distanceX;
+                y += distanceY;
+                lambda += distanceLambda;
+
+                distance = CreateVector.DenseOfEnumerable(distanceX.Concat(distanceY).Concat(distanceLambda));
+            } while (distance.Norm(2) > tol); // measures convergence
+
+            return x;
         }
 
         private Vector<double> GetScalingSteps(
@@ -315,6 +327,44 @@ namespace WarLight.Shared.AI.Snowbird
             return scalingSteps;
         }
 
+        private Vector<double> GetTotalSteps(
+            Matrix<double> A,
+            Matrix<double> G,
+            Matrix<double> Lambda,
+            Matrix<double> Y,
+            Vector<double> rd,
+            Vector<double> rp,
+            Vector<double> lambdaAff,
+            Vector<double> yAff,
+            double mu,
+            double sigma)
+        {
+            Matrix<double> DeltaLambdaAff = DenseMatrix.OfDiagonalVector(lambdaAff);
+            Matrix<double> DeltaYAff = DenseMatrix.OfDiagonalVector(yAff);
+            Vector<double> e = DenseVector.OfEnumerable(rd.Select(val => 1.0)); // quick creation of the all 1 vector
+
+            // Create the system of equations to solve using Newton's method
+            // TODO: Use the CreateMatrix.DenseOfMatrixArray(...) function for the below purpose
+            var cols = G.ColumnCount + Lambda.ColumnCount + Y.ColumnCount;
+            var rows = G.RowCount + A.RowCount + Y.RowCount;
+            Matrix<double> newtonSystem = DenseMatrix.OfDiagonalArray(e.Select(val => -1.0).ToArray());
+            newtonSystem.SetSubMatrix(0, 0, G);
+            newtonSystem.SetSubMatrix(0, G.ColumnCount + Lambda.ColumnCount, A.Transpose().Multiply(-1));
+            newtonSystem.SetSubMatrix(G.RowCount, 0, A);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount, Lambda);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount + Lambda.ColumnCount, Y);
+
+            // Establish the solution vector to Ax = b
+            var partC = e.Multiply(sigma * mu) - Lambda * (Y * e) - DeltaLambdaAff * (DeltaYAff * e);
+            var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(partC));
+
+            // actually perform newtons method
+            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB);
+
+            // need I validate the result?
+            return scalingSteps;
+        }
+
         private Vector<double> NewtonsMethod(Matrix<double> A, Vector<double> b)
         {
             // find the solution to Ax - b = 0
@@ -343,21 +393,26 @@ namespace WarLight.Shared.AI.Snowbird
             return x;
         }
 
-        private double LineSearch(Vector<double> y, Vector<double> lambda, Vector<double> yAff, Vector<double> lambdaAff, double tol)
+        private double LineSearch(
+            Func<double, double> daf,
+            Func<double, double> ddaf,
+            double alphaStart, 
+            double lowerBound, 
+            bool isLowerBoundInclusive,
+            double upperBound, 
+            bool isUpperBoundInclusive, 
+            double tol)
         {
-            var alpha = 0.01;
-            var baseComponent = DenseVector.OfEnumerable(y.Concat(lambda)).Multiply(-1);
-            var affComponent = DenseVector.OfEnumerable(yAff.Concat(lambdaAff)).Multiply(-1);
-            Func<double, double> daf = beta => this.da2Norm(baseComponent, affComponent, beta);
-            Func<double, double> ddaf = beta => this.dda2Norm(baseComponent, affComponent, beta);
-
-
             // f in this context is the 2-norm of the gradient and we want to drive it to 0 to find the min of the negative of the composite vector
             // Recall that computing the maximum of a function is the same as computing the minimum of the negative of the function.
             // Perform a line search over the range (0,1] for the proper alpha.
-            var der = daf(alpha);
-            var dder = ddaf(alpha);
-            while (der > tol && alpha > 0 && alpha <= 1)
+            Func<double, bool> lowerComp = beta => isLowerBoundInclusive ? beta >= lowerBound : beta > lowerBound;
+            Func<double, bool> upperComp = beta => isLowerBoundInclusive ? beta <= upperBound : beta < upperBound;
+
+            var der = daf(alphaStart);
+            var dder = ddaf(alphaStart);
+            var alpha = alphaStart;
+            while (der > tol && lowerComp(alpha) && upperComp(alpha))
             {
                 alpha -= der / dder;
                 der = daf(alpha);
@@ -366,6 +421,31 @@ namespace WarLight.Shared.AI.Snowbird
 
             return alpha;
         }
+
+        private double MaxAlphaHatAff(Vector<double> y, Vector<double> lambda, Vector<double> yAff, Vector<double> lambdaAff, double tol)
+        {
+            var alpha = 0.01;
+            var baseComponent = DenseVector.OfEnumerable(y.Concat(lambda)).Multiply(-1);
+            var affComponent = DenseVector.OfEnumerable(yAff.Concat(lambdaAff)).Multiply(-1);
+            Func<double, double> daf = beta => this.da2Norm(baseComponent, affComponent, beta);
+            Func<double, double> ddaf = beta => this.dda2Norm(baseComponent, affComponent, beta);
+
+            return this.LineSearch(daf, ddaf, alpha, 0, false, 1, true, tol);
+        }
+
+        private double MaxAlphaTau(Vector<double> v, Vector<double> deltaV, double tau, double tol)
+        {
+            var alpha = 0.01;
+            var tauFactor = 1 - tau;
+            var baseComp = DenseVector.OfEnumerable(v.Select(vi => vi - tauFactor * vi));
+
+            // define derivate lambdas
+            Func<double, double> daf = beta => this.da2Norm(baseComp, deltaV, beta);
+            Func<double, double> ddaf = beta => this.dda2Norm(baseComp, deltaV, beta);
+
+            return this.LineSearch(daf, ddaf, alpha, 0, false, 1, false, tol);
+        }
+
 
         private double da2Norm(Vector<double> x, Vector<double> y, double alpha)
         {
