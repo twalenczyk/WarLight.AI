@@ -187,6 +187,7 @@ namespace WarLight.Shared.AI.Snowbird
             var yBarBase = new double[mu.Count];
             var lamBarBase = new double[mu.Count];
 
+            // TODO: improve initialization logic.
             for (var i = 0; i < mu.Count; i++)
             {
                 if (i == 0)
@@ -215,29 +216,25 @@ namespace WarLight.Shared.AI.Snowbird
 
             // find the affine scaling measures
             Matrix<double> Y = DenseMatrix.OfDiagonalArray(yBarBase);
-            Matrix<double> Delta = DenseMatrix.OfDiagonalArray(yBarBase);
+            Matrix<double> Lambda = DenseMatrix.OfDiagonalArray(yBarBase);
             Vector<double> e = DenseVector.OfEnumerable(mu.Select(val => 1.0)); // quick creation of the all 1 vector
 
-            var cols = G.ColumnCount + Delta.ColumnCount + Y.ColumnCount;
+            var cols = G.ColumnCount + Lambda.ColumnCount + Y.ColumnCount;
             var rows = G.RowCount + A.RowCount + Y.RowCount;
             Matrix<double> newtonSystem = DenseMatrix.OfDiagonalArray(e.Select(val => -1.0).ToArray());
             newtonSystem.SetSubMatrix(0, 0, G);
-            newtonSystem.SetSubMatrix(0, G.ColumnCount + Delta.ColumnCount, A.Transpose().Multiply(-1));
+            newtonSystem.SetSubMatrix(0, G.ColumnCount + Lambda.ColumnCount, A.Transpose().Multiply(-1));
             newtonSystem.SetSubMatrix(G.RowCount, 0, A);
-            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount, Delta);
-            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount + Delta.ColumnCount, Y);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount, Lambda);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount + Lambda.ColumnCount, Y);
 
-            // perform newton's method to get the affine values
+            // Get ahold of the initial affine step values to determine a good starting point.
             var compMeasure = yBar.DotProduct(lamBar) / m;
             var sigma = 0; // correct for the affine calculation per p. 484
             var rd = G * xBar - A.Transpose() * lamBar + mu;
             var rp = A * xBar - yBar - b;
 
-            var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(Delta * (Y * e.Multiply(-1)) + e.Multiply(sigma * compMeasure)));
-
-            // actually perform newtons method
-            var affineTransforms = this.NewtonsMethod(newtonSystem, newtonB);
-
+            var affineTransforms = this.GetScalingSteps(A, G, Lambda, Y, rd, rp, compMeasure, sigma);
 
             // initialize variables
             var yBase = new double[xBar.Count];
@@ -264,12 +261,16 @@ namespace WarLight.Shared.AI.Snowbird
                 y = y_prev;
                 lambda = lambda_prev;
 
+                // probably need to update rd rp compMeasure and sigma
+                // get affine scaling steps
+                affineTransforms = this.GetScalingSteps(A, G, Lambda, Y, rd, rp, compMeasure, sigma);
+                
+
                 compMeasure = y.DotProduct(lambda) / m;
 
-                // line search for alpha bar
-                var alphaAffHat = 0;
+                var alphaAffHat = this.LineSearch(y, lambda, this.GetDeltaY(affineTransforms, x.Count), this.GetDeltaLambda(affineTransforms, x.Count), tol);
                 var compMeasureAff = (y + this.GetDeltaY(affineTransforms, xBar.Count).Multiply(alphaAffHat)).DotProduct(lambda + this.GetDeltaLambda(affineTransforms, xBar.Count).Multiply(alphaAffHat)) / m;
-                var sig = Math.Pow(compMeasureAff / compMeasure, 3);
+                var centeringParam = Math.Pow(compMeasureAff / compMeasure, 3);
                 // get the new deltas
                 // minimize  a new function
                 // update vector
@@ -279,6 +280,39 @@ namespace WarLight.Shared.AI.Snowbird
 
                 distance = CreateVector.DenseOfEnumerable((x - x_prev).Concat(y - y_prev).Concat(lambda - lambda_prev));
             } while (distance.Norm(2) > tol);
+        }
+
+        private Vector<double> GetScalingSteps(
+            Matrix<double> A, 
+            Matrix<double> G, 
+            Matrix<double> Lambda, 
+            Matrix<double> Y, 
+            Vector<double> rd, 
+            Vector<double> rp,
+            double mu, 
+            double sigma)
+        {
+            Vector<double> e = DenseVector.OfEnumerable(rd.Select(val => 1.0)); // quick creation of the all 1 vector
+            
+            // Create the system of equations to solve using Newton's method
+            // TODO: Use the CreateMatrix.DenseOfMatrixArray(...) function for the below purpose
+            var cols = G.ColumnCount + Lambda.ColumnCount + Y.ColumnCount;
+            var rows = G.RowCount + A.RowCount + Y.RowCount;
+            Matrix<double> newtonSystem = DenseMatrix.OfDiagonalArray(e.Select(val => -1.0).ToArray());
+            newtonSystem.SetSubMatrix(0, 0, G);
+            newtonSystem.SetSubMatrix(0, G.ColumnCount + Lambda.ColumnCount, A.Transpose().Multiply(-1));
+            newtonSystem.SetSubMatrix(G.RowCount, 0, A);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount, Lambda);
+            newtonSystem.SetSubMatrix(G.RowCount + A.RowCount, G.ColumnCount + Lambda.ColumnCount, Y);
+
+            // Establish the solution vector to Ax = b
+            var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(Lambda * (Y * e.Multiply(-1)) + e.Multiply(sigma * mu)));
+
+            // actually perform newtons method
+            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB);
+            
+            // need I validate the result?
+            return scalingSteps;
         }
 
         private Vector<double> NewtonsMethod(Matrix<double> A, Vector<double> b)
@@ -307,6 +341,39 @@ namespace WarLight.Shared.AI.Snowbird
             }
 
             return x;
+        }
+
+        private double LineSearch(Vector<double> y, Vector<double> lambda, Vector<double> yAff, Vector<double> lambdaAff, double tol)
+        {
+            var alpha = 0.01;
+            var baseComponent = DenseVector.OfEnumerable(y.Concat(lambda)).Multiply(-1);
+            var affComponent = DenseVector.OfEnumerable(yAff.Concat(lambdaAff)).Multiply(-1);
+            Func<double, double> daf = beta => this.da2Norm(baseComponent, affComponent, beta);
+            Func<double, double> ddaf = beta => this.dda2Norm(baseComponent, affComponent, beta);
+
+
+            // f in this context is the 2-norm of the gradient and we want to drive it to 0 to find the min of the negative of the composite vector
+            // Recall that computing the maximum of a function is the same as computing the minimum of the negative of the function.
+            // Perform a line search over the range (0,1] for the proper alpha.
+            var der = daf(alpha);
+            var dder = ddaf(alpha);
+            while (der > tol && alpha > 0 && alpha <= 1)
+            {
+                alpha -= der / dder;
+                der = daf(alpha);
+                dder = ddaf(alpha);
+            }
+
+            return alpha;
+        }
+
+        private double da2Norm(Vector<double> x, Vector<double> y, double alpha)
+        {
+            return 2 * (x.Zip(y, (xi, yi) => xi * yi).Sum() + y.Sum(yi => alpha * yi * yi));
+        }
+        private double dda2Norm(Vector<double> x, Vector<double> y, double alpha)
+        {
+            return 2 * y.Sum(yi => yi * yi);
         }
 
         private Vector<double> GetDeltaX(Vector<double> tuple, int size)
