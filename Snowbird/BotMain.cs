@@ -229,17 +229,99 @@ namespace WarLight.Shared.AI.Snowbird
 
             // perform newton's method to get the affine values
             var compMeasure = yBar.DotProduct(lamBar) / m;
-            var sigma = 1; // TODO update!
+            var sigma = 0; // correct for the affine calculation per p. 484
             var rd = G * xBar - A.Transpose() * lamBar + mu;
             var rp = A * xBar - yBar - b;
 
             var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(Delta * (Y * e.Multiply(-1)) + e.Multiply(sigma * compMeasure)));
 
             // actually perform newtons method
+            var affineTransforms = this.NewtonsMethod(newtonSystem, newtonB);
 
-            // TODO implement!
 
+            // initialize variables
+            var yBase = new double[xBar.Count];
+            var lamBase = new double[xBar.Count];
+            for (var i = 0; i < xBar.Count; i++)
+            {
+                yBase[i] = Math.Max(1.0, Math.Abs(yBar[i] + this.GetDeltaY(affineTransforms, xBar.Count)[i]));
+                lamBase[i] = Math.Max(1.0, Math.Abs(lamBar[i] + this.GetDeltaLambda(affineTransforms, xBar.Count)[i]));
+            }
 
+            Vector<double> x;
+            Vector<double> y;
+            Vector<double> lambda;
+            Vector<double> distance;
+            var x_prev = xBar;
+            var y_prev = DenseVector.OfArray(yBase);
+            var lambda_prev = DenseVector.OfArray(lamBase); // update with correct affine index
+
+            // run the algorithm until?
+            var tol = 0.000001;
+            do
+            {
+                x = x_prev;
+                y = y_prev;
+                lambda = lambda_prev;
+
+                compMeasure = y.DotProduct(lambda) / m;
+
+                // line search for alpha bar
+                var alphaAffHat = 0;
+                var compMeasureAff = (y + this.GetDeltaY(affineTransforms, xBar.Count).Multiply(alphaAffHat)).DotProduct(lambda + this.GetDeltaLambda(affineTransforms, xBar.Count).Multiply(alphaAffHat)) / m;
+                var sig = Math.Pow(compMeasureAff / compMeasure, 3);
+                // get the new deltas
+                // minimize  a new function
+                // update vector
+                x_prev = x;
+                // y_prev = y;
+                // lambda_prev = lambda;
+
+                distance = CreateVector.DenseOfEnumerable((x - x_prev).Concat(y - y_prev).Concat(lambda - lambda_prev));
+            } while (distance.Norm(2) > tol);
+        }
+
+        private Vector<double> NewtonsMethod(Matrix<double> A, Vector<double> b)
+        {
+            // find the solution to Ax - b = 0
+            // I'm not sure what the initial value should be
+            var x = CreateVector.DenseOfEnumerable(A.Row(0).Select(entry => 0.0)); // initial guess is x = 0;
+            Func<Vector<double>, Vector<double>> f = z => A * z - b;
+            Func<Vector<double>, Matrix<double>> df = z =>
+            {
+                var retBase = new double[A.RowCount, A.ColumnCount];
+                for (int i = 0; i < A.RowCount; i++)
+                {
+                    for (int j = 0; j < A.ColumnCount; j++)
+                    {
+                        retBase[i, j] = A[i, j] * z[j];
+                    }
+                }
+                return DenseMatrix.OfArray(retBase);
+            };
+            var fx = f(x);
+            var tol = 0.000001;
+            while (fx.Norm(2) > tol)
+            {
+                x -= df(x).Inverse() * f(x); // right?
+            }
+
+            return x;
+        }
+
+        private Vector<double> GetDeltaX(Vector<double> tuple, int size)
+        {
+            return DenseVector.OfEnumerable(tuple.SubVector(0, size));
+        }
+
+        private Vector<double> GetDeltaY(Vector<double> tuple, int size)
+        {
+            return DenseVector.OfEnumerable(tuple.SubVector(size, size));
+        }
+
+        private Vector<double> GetDeltaLambda(Vector<double> tuple, int size)
+        {
+            return DenseVector.OfEnumerable(tuple.SubVector(2 * size, size));
         }
     }
 }
