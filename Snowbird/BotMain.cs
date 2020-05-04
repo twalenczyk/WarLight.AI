@@ -137,13 +137,13 @@ namespace WarLight.Shared.AI.Snowbird
         {
             // Test parser
             this.MapModel = new MapModels((MapIDType) 2);
-            var territories = new List<TerritoryIDType>();
+            var territories = new List<TerritoryIDType>(new TerritoryIDType[] { (TerritoryIDType)1, (TerritoryIDType)5, (TerritoryIDType)8 });
             this.StandingArmiesMean = this.MapModel.GetStandingArmyMean(territories, 1);
             this.StandingArmiesVariance = this.MapModel.GetStandingArmyVariances(territories, 1);
-            this.StandingArmiesCorrelations = this.MapModel.GetStandingArmyCorrelations(new List<TerritoryIDType>(), 1);
+            this.StandingArmiesCorrelations = this.MapModel.GetStandingArmyCorrelations(territories, 1);
 
             // define the mean vector
-            var meanArr = this.StandingArmiesMean.Select(kvp => kvp.Value).ToArray();
+            var meanArr = this.StandingArmiesMean.Where(kvp => territories.Contains(kvp.Key)).Select(kvp => kvp.Value).ToArray();
             Vector<double> mu = DenseVector.OfArray(meanArr);
 
             // define the covariance matrix
@@ -162,18 +162,40 @@ namespace WarLight.Shared.AI.Snowbird
 
             // develop (equality-constraint) matrix A
             // For starters, we simply care that the vector sums to 1 (not explicitly worrying about positivity).
-            var aBase = new double[1, mu.Count];
-            for (var i = 0; i < mu.Count; i++)
+            var aBase = new double[G.RowCount + 1, G.RowCount];
+            for (var i = 0; i < G.RowCount; i++)
             {
-                aBase[0, i] = 1;
+                for (var j = 0; j < G.RowCount; j++) {
+                    if (i == 0)
+                    {
+                        aBase[0, j] = 1;
+                    }
+                    else
+                    {
+                        if (j == i-1)
+                        {
+                            aBase[i, j] = 1;
+                        }
+                        else
+                        {
+                            aBase[i, j] = 0;
+                        }
+                    }
+                }
             }
             Matrix<double> A = DenseMatrix.OfArray(aBase);
 
             // define the solution vector
-            var bBase = new double[1];
+            var bBase = new double[A.RowCount];
             bBase[0] = 1;
+            for (var i = 1;  i < A.RowCount; i++)
+            {
+                bBase[i] = 0;
+            }
             Vector<double> b = DenseVector.OfArray(bBase);
 
+            // generate a random non-singular matrix for testing
+            G = CreateMatrix.RandomPositiveDefinite<double>(G.ColumnCount);
             var deployments = this.ComputeOptimalDistribution(A, b, mu, G);
         }
 
@@ -184,8 +206,8 @@ namespace WarLight.Shared.AI.Snowbird
 
             // define starting point, then form good starting value
             var xBarBase = new double[mu.Count];
-            var yBarBase = new double[mu.Count];
-            var lamBarBase = new double[mu.Count];
+            var yBarBase = new double[A.RowCount];
+            var lamBarBase = new double[A.RowCount];
 
             // TODO: improve initialization logic.
             for (var i = 0; i < mu.Count; i++)
@@ -200,15 +222,18 @@ namespace WarLight.Shared.AI.Snowbird
                 else if(i == 1)
                 {
                     xBarBase[1] = 0;
-                    yBarBase[1] = -1;
+                    yBarBase[1] = 1;
                     lamBarBase[1] = 0;
                 }
                 else
                 {
-                    // TODO take a clsoer look here
+                    // TODO take a closer look here
                     xBarBase[i] = yBarBase[i] = lamBarBase[i] = 0;
                 }
             }
+
+            yBarBase[A.RowCount - 1] = 1;
+            lamBarBase[A.RowCount - 1] = 0;
 
             Vector<double> xBar = DenseVector.OfArray(xBarBase);
             Vector<double> yBar = DenseVector.OfArray(yBarBase);
@@ -304,13 +329,13 @@ namespace WarLight.Shared.AI.Snowbird
             double mu, 
             double sigma)
         {
-            Vector<double> e = DenseVector.OfEnumerable(rd.Select(val => 1.0)); // quick creation of the all 1 vector
+            Vector<double> e = CreateVector.Dense(Y.RowCount, 1.0); // quick creation of the all 1 vector
             
             // Create the system of equations to solve using Newton's method
             // TODO: Use the CreateMatrix.DenseOfMatrixArray(...) function for the below purpose
             var cols = G.ColumnCount + Lambda.ColumnCount + Y.ColumnCount;
             var rows = G.RowCount + A.RowCount + Y.RowCount;
-            Matrix<double> newtonSystem = DenseMatrix.OfDiagonalArray(e.Select(val => -1.0).ToArray());
+            Matrix<double> newtonSystem = CreateMatrix.DenseDiagonal(rows, cols, -1.0);
             newtonSystem.SetSubMatrix(0, 0, G);
             newtonSystem.SetSubMatrix(0, G.ColumnCount + Lambda.ColumnCount, A.Transpose().Multiply(-1));
             newtonSystem.SetSubMatrix(G.RowCount, 0, A);
@@ -321,7 +346,8 @@ namespace WarLight.Shared.AI.Snowbird
             var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(Lambda * (Y * e.Multiply(-1)) + e.Multiply(sigma * mu)));
 
             // actually perform newtons method
-            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB);
+            Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 0.0);
+            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB, xStart);
             
             // need I validate the result?
             return scalingSteps;
@@ -359,17 +385,18 @@ namespace WarLight.Shared.AI.Snowbird
             var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(partC));
 
             // actually perform newtons method
-            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB);
+            Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 0.0);
+            var scalingSteps = this.NewtonsMethod(newtonSystem, newtonB, xStart);
 
             // need I validate the result?
             return scalingSteps;
         }
 
-        private Vector<double> NewtonsMethod(Matrix<double> A, Vector<double> b)
+        private Vector<double> NewtonsMethod(Matrix<double> A, Vector<double> b, Vector<double> xStart)
         {
             // find the solution to Ax - b = 0
             // I'm not sure what the initial value should be
-            var x = CreateVector.DenseOfEnumerable(A.Row(0).Select(entry => 0.0)); // initial guess is x = 0;
+            var x = xStart; // initial guess is x = 0;
             Func<Vector<double>, Vector<double>> f = z => A * z - b;
             Func<Vector<double>, Matrix<double>> df = z =>
             {
@@ -407,7 +434,7 @@ namespace WarLight.Shared.AI.Snowbird
             // Recall that computing the maximum of a function is the same as computing the minimum of the negative of the function.
             // Perform a line search over the range (0,1] for the proper alpha.
             Func<double, bool> lowerComp = beta => isLowerBoundInclusive ? beta >= lowerBound : beta > lowerBound;
-            Func<double, bool> upperComp = beta => isLowerBoundInclusive ? beta <= upperBound : beta < upperBound;
+            Func<double, bool> upperComp = beta => isUpperBoundInclusive ? beta <= upperBound : beta < upperBound;
 
             var der = daf(alphaStart);
             var dder = ddaf(alphaStart);

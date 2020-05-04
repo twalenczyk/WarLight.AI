@@ -105,19 +105,31 @@ namespace WarLight.Shared.AI.Snowbird
                 this.StandingArmiesPerTurnCorrelations = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // correlation between the two random variables for each turn
-                for (var index = 0; index < this.StandingArmiesPerTurnMean.Count; index++)
+                for (var index = 0; index < this.StandingArmiesPerTurnVariance.Count; index++)
                 {
                     this.StandingArmiesPerTurnCorrelations.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
 
                     // improve efficienes by storing ij = ji
                     foreach (var i in territories)
                     {
+                        // simple error prevention
+                        if (!this.StandingArmiesPerTurnVariance[index].ContainsKey(i))
+                        {
+                            continue;
+                        }
+
                         this.StandingArmiesPerTurnCorrelations[index].Add(i, new Dictionary<TerritoryIDType, double>());
                         foreach (var j in territories)
                         {
+                            // simple error prevention
+                            if (!this.StandingArmiesPerTurnVariance[index].ContainsKey(j))
+                            {
+                                continue;
+                            }
+
                             var iSig = this.StandingArmiesPerTurnVariance[index][i];
                             var jSig = this.StandingArmiesPerTurnVariance[index][j];
-                            var correlationValue = correlationRandomVariables[index][i][j] / (iSig * jSig);
+                            var correlationValue = 0.5; // correlationRandomVariables[index][i][j] / (iSig * jSig);
                             this.StandingArmiesPerTurnCorrelations[index][i][j] = correlationValue;
                         }
                     }
