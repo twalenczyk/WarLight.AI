@@ -17,14 +17,15 @@ namespace WarLight.Shared.AI.Common.Util
 
         public static int currentGameID;
         public static int currentTurnNumber;
+        public static int currentMapID;
 
-        public static void WriteStandingArmyData(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies)
+        public static void WriteStandingArmiesData(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies)
         {
             // create the JSON object for the turn.
             var data = DataCollector.CreateStandingArmyJson(armies, currentTurnNumber);
 
             // Append data to file
-            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Games");
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Raw//Maps//" + currentMapID.ToString() + "//StandingArmies");
             var gamePath = currentGameID.ToString() + ".txt";
             AppendToFile(data.ToString() + '!', dir, gamePath);
         }

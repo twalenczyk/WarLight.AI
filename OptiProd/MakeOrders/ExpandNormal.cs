@@ -20,7 +20,7 @@ namespace WarLight.Shared.AI.Prod2.MakeOrders
 
             // Write the data for data collector
             var info = attackableTerritories.Select(territory => new KeyValuePair<TerritoryIDType, int>(territory.ID, territory.NumArmies.NumArmies));
-            DataCollector.WriteStandingArmyData(info.As<IEnumerable<KeyValuePair<TerritoryIDType, double>>>());
+            DataCollector.WriteStandingArmiesData(info.As<IEnumerable<KeyValuePair<TerritoryIDType, double>>>());
 
             var terrs = attackableTerritories.Where(o => o.IsNeutral || o.OwnerPlayerID == TerritoryStanding.FogPlayerID).Select(o => o.ID).ToHashSet(false);
             AttackableNeutrals = GetExpansionWeights(terrs);

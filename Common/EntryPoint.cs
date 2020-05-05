@@ -140,6 +140,7 @@ Supported bot names: " + BotFactory.Names.JoinStrings(", "));
             // Override some settings for the data collector
             DataCollector.currentGameID = game.ID.GetValue();
             DataCollector.currentTurnNumber = game.NumberOfTurns;
+            DataCollector.currentMapID = map.ID.GetValue();
 
 
             if (game.State == GameState.DistributingTerritories)
