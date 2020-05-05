@@ -519,7 +519,7 @@ namespace WarLight.Shared.AI.Snowbird
 
         private void SetDefenseDeploymentCorrelations()
         {
-            if (this.DefenseDeploymentCorrelationsPerTurn is List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>)
+            if (this.DefenseDeploymentCorrelationsPerTurn == null)
             {
                 // initialize the matrix
                 this.SetDefenseDeploymentMeans();
@@ -767,7 +767,7 @@ namespace WarLight.Shared.AI.Snowbird
 
         private void SetStandingArmiesCorrelations()
         {
-            if (this.StandingArmiesPerTurnCorrelations is List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>)
+            if (this.StandingArmiesPerTurnCorrelations == null)
             {
                 // initialize the matrix
                 this.SetStandingArmiesMeans();

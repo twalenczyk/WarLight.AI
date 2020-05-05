@@ -143,8 +143,7 @@ namespace WarLight.Shared.AI.Snowbird
             this.StandingArmiesCorrelations = this.MapModel.GetStandingArmyCorrelations(territories, 1);
 
             // define the mean vector
-            var meanArr = this.StandingArmiesMean.Where(kvp => territories.Contains(kvp.Key)).Select(kvp => kvp.Value).ToArray();
-            Vector<double> mu = DenseVector.OfArray(meanArr);
+            Vector<double> mu = DenseVector.OfArray(this.StandingArmiesMean.Values.ToArray());
 
             // define the covariance matrix
             var corrBase = this.StandingArmiesCorrelations.Select(kvp => kvp.Value.Select(pvk => pvk.Value).ToArray()).ToArray();
@@ -350,7 +349,7 @@ namespace WarLight.Shared.AI.Snowbird
             var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(Lambda * (Y * e.Multiply(-1)) + e.Multiply(sigma * mu)));
 
             // actually perform newtons method
-            Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 0.0);
+            Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 1.0);
             Func<Vector<double>, Vector<double>> f = z => x1Norm(newtonSystem, newtonB, z);
             Func<Vector<double>, Matrix<double>> df = z => dx1Norm(newtonSystem, newtonB, z);
             var scalingSteps = this.NewtonsMethod(f, df, xStart);
@@ -391,7 +390,7 @@ namespace WarLight.Shared.AI.Snowbird
             var newtonB = DenseVector.OfEnumerable(rd.Multiply(-1).Concat(rp.Multiply(-1)).Concat(partC));
 
             // set up initial variables and lambda functions for Newton's method
-            Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 0.0);
+            Vector<double> xStart = CreateVector.Dense(newtonSystem.ColumnCount, 1.0);
             Func<Vector<double>, Vector<double>> f = z => x1Norm(newtonSystem, newtonB, z);
             Func<Vector<double>, Matrix<double>> df = z => dx1Norm(newtonSystem, newtonB, z);
             var scalingSteps = this.NewtonsMethod(f, df, xStart);
