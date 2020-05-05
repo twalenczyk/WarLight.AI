@@ -143,5 +143,128 @@ namespace WarLight.Shared.AI.Snowbird
 
             return ret;
         }
+
+        /// <summary>
+        /// If possible, gets the stored means for defense deployments on a map. If a file holding the data does not exist, it
+        /// will attempt to create one. If all else fails, it returns null.
+        /// </summary>
+        /// <param name="mapID"></param>
+        /// <returns>Returns a list of means for defense deployments. Indexing into the list gives you a dictionary of territory IDs
+        /// that you have stats for at turn. If null is returned, then no files existed for this map.</returns>
+        public static List<Dictionary<TerritoryIDType, double>> GetDefenseDeploymentMeans(MapIDType mapID)
+        {
+            List<Dictionary<TerritoryIDType, double>> ret = null;
+
+            // see if a stored file exists in the consolidated data directory
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//DefenseDeployments");
+            var fp = Path.Combine(dir, "means.txt");
+
+            if (File.Exists(fp))
+            {
+                ret = new List<Dictionary<TerritoryIDType, double>>();
+
+                // simply parse it and return it.
+                var text = File.ReadAllText(fp);
+                text = text.Replace("\n", string.Empty).Replace("\r", string.Empty);
+                var check = text.Split('!');
+                foreach (var chunk in text.Split('!').Where(s => s != string.Empty))
+                {
+                    var data = JObject.Parse(chunk);
+                    var turnNumber = data["turnNumber"].Value<int>();
+                    var borderArmies = data["deployment"];
+
+                    // in case turn numbers are unordered/missing
+                    for (var i = ret.Count; i <= turnNumber; i++)
+                    {
+                        ret.Add(new Dictionary<TerritoryIDType, double>());
+                    }
+
+                    foreach (var border in borderArmies)
+                    {
+                        var id = (TerritoryIDType)border["territoryID"].Value<int>();
+                        var armies = border["armies"].Value<double>();
+                        ret[turnNumber][id] = armies;
+                    }
+                }
+            }
+            else
+            {
+                // consolidate the data from the set of current games on file
+                var rawData = new List<Dictionary<TerritoryIDType, List<double>>>();
+                dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Raw//Maps//" + mapID.ToString() + "//DefenseDeployments");
+                
+                foreach (var gameFile in Directory.GetFiles(dir))
+                {
+                    var deploymentDataPerTurn = ParseDefenseDeploymentGame(gameFile);
+
+                    for (var i = 0; i < deploymentDataPerTurn.Count; i++)
+                    {
+                        if (rawData.Count <= i)
+                        {
+                            rawData.Add(deploymentDataPerTurn[i]);
+                        }
+                        else
+                        {
+                            deploymentDataPerTurn[i].ForEach(kvp =>
+                            {
+                                if (rawData[i].ContainsKey(kvp.Key))
+                                {
+                                    rawData[i][kvp.Key].AddRange(kvp.Value);
+                                }
+                                else
+                                {
+                                    rawData[i][kvp.Key] = kvp.Value;
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // consider storing the rawData collection somewhere
+                ret = rawData.Select(
+                    dict => dict.Select(
+                            kvp => new KeyValuePair<TerritoryIDType, double>(kvp.Key, kvp.Value.Average()))
+                        .ToDictionary(
+                            kvp => kvp.Key, kvp => kvp.Value))
+                        .ToList();
+
+                // write the data for future use
+                DataCollector.WriteMapDefenseDeploymentMeans(ret, mapID);
+            }
+
+            return ret;
+        }
+
+        private static List<Dictionary<TerritoryIDType, List<double>>> ParseDefenseDeploymentGame(string filename)
+        {
+            var ret = new List<Dictionary<TerritoryIDType, List<double>>>();
+
+            var text = File.ReadAllText(Path.Combine(filename));
+            text = text.Replace("\n", string.Empty).Replace("\r", string.Empty);
+            var check = text.Split('!');
+            foreach (var chunk in text.Split('!').Where(s => s != string.Empty))
+            {
+                var data = JObject.Parse(chunk);
+                var turnNumber = data["turnNumber"].Value<int>();
+                var deployment = data["deployment"];
+
+                while (ret.Count <= turnNumber)
+                {
+                    ret.Add(new Dictionary<TerritoryIDType, List<double>>());
+                }
+
+                var terrID = (TerritoryIDType)deployment["territoryID"].Value<int>();
+                var armiesDeployed = deployment["armiesDeployed"].Value<int>();
+
+                if (!ret[turnNumber].ContainsKey(terrID))
+                {
+                    ret[turnNumber][terrID] = new List<double>();
+                }
+                
+                ret[turnNumber][terrID].Add(armiesDeployed);
+            }
+
+            return ret;
+        }
     }
 }

@@ -102,6 +102,20 @@ namespace WarLight.Shared.AI.Common.Util
             AppendToFile(turnData.ToString() + '!', dir, gamePath);
         }
 
+        public static void WriteMapDefenseDeploymentMeans(List<Dictionary<TerritoryIDType, double>> means, MapIDType mapID)
+        {
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//DefenseDeployments");
+            var gamePath = "means.txt";
+            ForceCreateFile(dir, gamePath); // overwrite because we don't want conflicting information
+
+            for (var i = 0; i < means.Count; i++)
+            {
+                var dict = means[i];
+                var data = CreateDefenseDeploymentJson(dict.ToList(), i);
+                AppendToFile(data.ToString() + '!', dir, gamePath);
+            }
+        }
+
         private static JObject CreateStandingArmyJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
         {
             var armyData = new JArray();
@@ -120,11 +134,36 @@ namespace WarLight.Shared.AI.Common.Util
             return data;
         }
 
+        private static JObject CreateDefenseDeploymentJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
+        {
+            var armyData = new JArray();
+            foreach (KeyValuePair<TerritoryIDType, double> kvp in armies)
+            {
+                var entry = new JObject();
+                entry["territoryID"] = (int)kvp.Key;
+                entry["armies"] = kvp.Value;
+                armyData.Add(entry);
+            }
+
+            var data = new JObject();
+            data["turnNumber"] = turnNumber;
+            data["deployment"] = armyData;
+
+            return data;
+        }
+
         private static void AppendToFile(string content, string dir, string filename)
         {
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
             File.AppendAllText(Path.Combine(dir, filename), content);
+        }
+
+        private static void ForceCreateFile(string dir, string filename)
+        {
+            Directory.CreateDirectory(dir);
+            var sw = File.Create(Path.Combine(dir, filename));
+            sw.Close(); // hacky
         }
     }
 }
