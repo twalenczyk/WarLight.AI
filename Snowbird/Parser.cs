@@ -302,7 +302,7 @@ namespace WarLight.Shared.AI.Snowbird
                 }
 
                 // store comprehensive as a file for later use
-                DataCollector.WriteMapStandingArmyComprehensiveData(comprehensive, mapID);
+                DataCollector.WriteMapStandingArmyMeansComprehensiveData(comprehensive, mapID);
 
                 // convert to averagess
                 foreach (var dict in comprehensive)
@@ -315,7 +315,7 @@ namespace WarLight.Shared.AI.Snowbird
                     }
                 }
 
-                DataCollector.WriteMapStandingArmyData(ret, mapID);
+                DataCollector.WriteMapStandingArmyMeans(ret, mapID);
             }
 
 
