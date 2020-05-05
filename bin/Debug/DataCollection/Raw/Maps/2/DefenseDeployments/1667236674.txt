@@ -1,0 +1,259 @@
+{
+  "turnNumber": 0,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 0,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 0,
+  "deployment": {
+    "territoryID": 21,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 3,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 2,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 18,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 3,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 18,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 18,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 21,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 30,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 9,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 9,
+  "deployment": {
+    "territoryID": 18,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 10,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 10,
+  "deployment": {
+    "territoryID": 18,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 12,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 12,
+  "deployment": {
+    "territoryID": 16,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 12,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 12,
+  "deployment": {
+    "territoryID": 9,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 12,
+  "deployment": {
+    "territoryID": 24,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 13,
+  "deployment": {
+    "territoryID": 7,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 13,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 13,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 13,
+  "deployment": {
+    "territoryID": 17,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 13,
+  "deployment": {
+    "territoryID": 24,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 13,
+  "deployment": {
+    "territoryID": 29,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 14,
+  "deployment": {
+    "territoryID": 7,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 14,
+  "deployment": {
+    "territoryID": 22,
+    "armiesDeployed": 4
+  }
+}!{
+  "turnNumber": 14,
+  "deployment": {
+    "territoryID": 29,
+    "armiesDeployed": 4
+  }
+}!

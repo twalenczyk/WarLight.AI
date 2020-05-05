@@ -12,10 +12,25 @@ namespace WarLight.Shared.AI.Snowbird
         private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnMean;
         private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnVariance;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> StandingArmiesPerTurnCorrelations;
+        private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentVariancesPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefenseDeploymentCorrelationsPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> DefensePowerMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> DefensePowerVariancesPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefensePowerCorrelationsPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> AttackDeploymentMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> AttackDeploymentVariancesPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackDeploymentCorrelationsPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> AttackPowerMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> AttackPowerVariancesPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackPowerCorrelationsPerTurn;
+
 
         public MapModels(MapIDType mapID)
         {
             this.MapID = mapID;
+
+            // initialize all lists if possible
         }
 
         public Dictionary<TerritoryIDType, double> GetStandingArmyMean(IEnumerable<TerritoryIDType> territories, int turnNumber)
