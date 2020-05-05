@@ -32,9 +32,15 @@ namespace WarLight.Shared.AI.Snowbird
 
             // initialize all lists if possible
             this.DefenseDeploymentMeansPerTurn = Parser.GetDefenseDeploymentMeans(mapID);
-
             this.AttackDeploymentMeansPerTurn = Parser.GetAttackDeploymentMeans(mapID);
         }
+
+        /*
+         * TODO:
+         * 1) Refactor commonly used code to improve readibility.
+         * 2) Store comprehensive data to prevent multiple parsings.
+         * 3) Add helper functions to create class vectors to improve readiblity of public getters.
+         */
 
         /*
          * *********************
