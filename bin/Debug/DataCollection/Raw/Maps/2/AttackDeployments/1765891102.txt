@@ -1,0 +1,253 @@
+{
+  "turnNumber": 0,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 36,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 41,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 6
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 9,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 34,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 15,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 3,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 3,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 34,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 41,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 36,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 3,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 10,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 20,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 36,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 24,
+    "armiesDeployed": 4
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 30,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 34,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 25,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 25,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 25,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 1,
+    "armiesDeployed": 6
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 8,
+  "deployment": {
+    "territoryID": 2,
+    "armiesDeployed": 0
+  }
+}!

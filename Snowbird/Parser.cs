@@ -236,8 +236,8 @@ namespace WarLight.Shared.AI.Snowbird
             var comprehensive = new List<Dictionary<TerritoryIDType, List<double>>>();
             var ret = new List<Dictionary<TerritoryIDType, double>>();
 
-            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Maps");
-            var fp = Path.Combine(dir, mapID.GetValue().ToString() + ".txt");
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//StandingArmies");
+            var fp = Path.Combine(dir, "means.txt");
             if (File.Exists(fp))
             {
                 // Simply parse the relevant file
@@ -266,55 +266,18 @@ namespace WarLight.Shared.AI.Snowbird
             }
             else
             {
-                // create the file
-                // assume all games are on the right map.
-                var gameDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Games");
-                var gameFps = Directory.GetFiles(gameDir);
-                foreach (var gameFp in gameFps)
-                {
-                    var text = File.ReadAllText(Path.Combine(gameFp));
-                    text = text.Replace("\n", string.Empty).Replace("\r", string.Empty);
-                    var check = text.Split('!');
-                    foreach (var chunk in text.Split('!').Where(s => s != string.Empty))
-                    {
-                        var data = JObject.Parse(chunk);
-                        var turnNumber = data["turnNumber"].Value<int>();
-                        var borderArmies = data["borderArmies"];
+                // consolidate the data from the set of current games on file
+                var rawData = GetStandingArmiesComprehensiveData(mapID);
 
-                        // in case turn numbers are unordered/missing
-                        for (var i = comprehensive.Count; i <= turnNumber; i++)
-                        {
-                            comprehensive.Add(new Dictionary<TerritoryIDType, List<double>>());
-                        }
+                // consider storing the rawData collection somewhere
+                ret = rawData.Select(
+                    dict => dict.Select(
+                            kvp => new KeyValuePair<TerritoryIDType, double>(kvp.Key, kvp.Value.Average()))
+                        .ToDictionary(
+                            kvp => kvp.Key, kvp => kvp.Value))
+                        .ToList();
 
-                        foreach (var border in borderArmies)
-                        {
-                            var id = (TerritoryIDType)border["territoryID"].Value<int>();
-                            var armies = border["armies"].Value<double>();
-
-                            if (!comprehensive[turnNumber].ContainsKey(id))
-                            {
-                                comprehensive[turnNumber].Add(id, new List<double>());
-                            }
-                            comprehensive[turnNumber][id].Add(armies);
-                        }
-                    }
-                }
-
-                // store comprehensive as a file for later use
-                DataCollector.WriteMapStandingArmyMeansComprehensiveData(comprehensive, mapID);
-
-                // convert to averagess
-                foreach (var dict in comprehensive)
-                {
-                    ret.Add(new Dictionary<TerritoryIDType, double>());
-                    foreach (var key in dict.Keys)
-                    {
-                        var retDict = ret.Last();
-                        retDict[key] = dict[key].Average();
-                    }
-                }
-
+                // write the data for future use
                 DataCollector.WriteMapStandingArmyMeans(ret, mapID);
             }
 
@@ -326,8 +289,8 @@ namespace WarLight.Shared.AI.Snowbird
         {
             var ret = new List<Dictionary<TerritoryIDType, List<double>>>();
 
-            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Maps//Comprehensive");
-            var fp = Path.Combine(dir, mapID.GetValue().ToString() + ".txt");
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//StandingArmies");
+            var fp = Path.Combine(dir, "means_comp.txt");
 
             if (File.Exists(fp))
             {
@@ -358,6 +321,7 @@ namespace WarLight.Shared.AI.Snowbird
             else
             {
                 // create the file from relevant game files on the map
+                ret = GetStandingArmiesComprehensiveData(mapID);
             }
 
             return ret;
@@ -368,6 +332,41 @@ namespace WarLight.Shared.AI.Snowbird
          * Helper Methods
          * *************************
          */
+        private static List<Dictionary<TerritoryIDType, List<double>>> ParseStandingArmiesGame(string filename)
+        {
+            var ret = new List<Dictionary<TerritoryIDType, List<double>>>();
+
+            var text = File.ReadAllText(filename);
+            text = text.Replace("\n", string.Empty).Replace("\r", string.Empty);
+            var check = text.Split('!');
+            foreach (var chunk in text.Split('!').Where(s => s != string.Empty))
+            {
+                var data = JObject.Parse(chunk);
+                var turnNumber = data["turnNumber"].Value<int>();
+                var borderArmies = data["borderArmies"];
+
+                // in case turn numbers are unordered/missing
+                for (var i = ret.Count; i <= turnNumber; i++)
+                {
+                    ret.Add(new Dictionary<TerritoryIDType, List<double>>());
+                }
+
+                foreach (var border in borderArmies)
+                {
+                    var id = (TerritoryIDType)border["territoryID"].Value<int>();
+                    var armies = border["armies"].Value<double>();
+
+                    if (!ret[turnNumber].ContainsKey(id))
+                    {
+                        ret[turnNumber].Add(id, new List<double>());
+                    }
+                    ret[turnNumber][id].Add(armies);
+                }
+            }
+
+            return ret;
+        }
+
         private static List<Dictionary<TerritoryIDType, List<double>>> ParseDeploymentGame(string filename)
         {
             var ret = new List<Dictionary<TerritoryIDType, List<double>>>();
@@ -434,6 +433,43 @@ namespace WarLight.Shared.AI.Snowbird
             }
 
             DataCollector.WriteMapDefenseDeploymentMeansComprehensiveData(rawData, mapID);
+            return rawData;
+        }
+
+        private static List<Dictionary<TerritoryIDType, List<double>>> GetStandingArmiesComprehensiveData(MapIDType mapID)
+        {
+            var rawData = new List<Dictionary<TerritoryIDType, List<double>>>();
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Raw//Maps//" + mapID.ToString() + "//StandingArmies");
+
+            foreach (var gameFile in Directory.GetFiles(dir))
+            {
+                var deploymentDataPerTurn = ParseStandingArmiesGame(gameFile);
+
+                for (var i = 0; i < deploymentDataPerTurn.Count; i++)
+                {
+                    if (rawData.Count <= i)
+                    {
+                        rawData.Add(deploymentDataPerTurn[i]);
+                    }
+                    else
+                    {
+                        deploymentDataPerTurn[i].ForEach(kvp =>
+                        {
+                            if (rawData[i].ContainsKey(kvp.Key))
+                            {
+                                rawData[i][kvp.Key].AddRange(kvp.Value);
+                            }
+                            else
+                            {
+                                rawData[i][kvp.Key] = kvp.Value;
+                            }
+                        });
+                    }
+                }
+            }
+
+            // update this
+            DataCollector.WriteMapStandingArmyMeansComprehensiveData(rawData, mapID);
             return rawData;
         }
     }

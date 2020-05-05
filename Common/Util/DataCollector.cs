@@ -25,7 +25,7 @@ namespace WarLight.Shared.AI.Common.Util
             var data = DataCollector.CreateStandingArmyJson(armies, currentTurnNumber);
 
             // Append data to file
-            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Raw//Maps//" + currentMapID.ToString() + "//StandingArmies");
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Raw//Maps//" + currentMapID.ToString() + "//StandingArmies");
             var gamePath = currentGameID.ToString() + ".txt";
             AppendToFile(data.ToString() + '!', dir, gamePath);
         }

@@ -1,0 +1,211 @@
+{
+  "turnNumber": 0,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 0,
+  "deployment": {
+    "territoryID": 41,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 4
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 16,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 1,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 2,
+  "deployment": {
+    "territoryID": 7,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 2,
+  "deployment": {
+    "territoryID": 28,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 3,
+  "deployment": {
+    "territoryID": 29,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 12,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 16,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 41,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 4,
+  "deployment": {
+    "territoryID": 28,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 12,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 29,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 36,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 36,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 28,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 5,
+  "deployment": {
+    "territoryID": 7,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 4,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 12,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 15,
+    "armiesDeployed": 1
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 15,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 15,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 28,
+    "armiesDeployed": 3
+  }
+}!{
+  "turnNumber": 6,
+  "deployment": {
+    "territoryID": 7,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 11,
+    "armiesDeployed": 0
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 12,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 28,
+    "armiesDeployed": 2
+  }
+}!{
+  "turnNumber": 7,
+  "deployment": {
+    "territoryID": 7,
+    "armiesDeployed": 0
+  }
+}!
