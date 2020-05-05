@@ -86,6 +86,49 @@ namespace WarLight.Shared.AI.Common.Util
             AppendToFile(turnData.ToString() + '!', dir, gamePath);
         }
 
+        public static void WriteMapAttackDeploymentMeans(List<Dictionary<TerritoryIDType, double>> means, MapIDType mapID)
+        {
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//AttackDeployments");
+            var gamePath = "means.txt";
+            ForceCreateFile(dir, gamePath); // overwrite because we don't want conflicting information
+
+            for (var i = 0; i < means.Count; i++)
+            {
+                var dict = means[i];
+                var data = CreateDeploymentJson(dict.ToList(), i);
+                AppendToFile(data.ToString() + '!', dir, gamePath);
+            }
+        }
+
+        public static void WriteMapAttackDeploymentMeansComprehensiveData(List<Dictionary<TerritoryIDType, List<double>>> armies, MapIDType mapID)
+        {
+            // create the JSON object for the turn.
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//AttackDeployments");
+            var gamePath = "means_comp.txt";
+            ForceCreateFile(dir, gamePath); // overwrite because we don't want conflicting information
+
+            for (var i = 0; i < armies.Count; i++)
+            {
+                var dict = armies[i];
+                var armyData = new JArray();
+
+                foreach (var kvp in dict)
+                {
+                    var entry = new JObject();
+                    entry["territoryID"] = (int)kvp.Key;
+                    entry["armies"] = new JArray(kvp.Value);
+
+                    armyData.Add(entry);
+                }
+
+                var data = new JObject();
+                data["turnNumber"] = i;
+                data["deployments"] = armyData;
+
+                AppendToFile(data.ToString() + '!', dir, gamePath);
+            }
+        }
+
         public static void WriteGameDefenseDeploymentData(TerritoryIDType terrID, int armiesDeployed, MapIDType mapID)
         {
             // get map id somehow
@@ -111,7 +154,36 @@ namespace WarLight.Shared.AI.Common.Util
             for (var i = 0; i < means.Count; i++)
             {
                 var dict = means[i];
-                var data = CreateDefenseDeploymentJson(dict.ToList(), i);
+                var data = CreateDeploymentJson(dict.ToList(), i);
+                AppendToFile(data.ToString() + '!', dir, gamePath);
+            }
+        }
+
+        public static void WriteMapDefenseDeploymentMeansComprehensiveData(List<Dictionary<TerritoryIDType, List<double>>> armies, MapIDType mapID)
+        {
+            // create the JSON object for the turn.
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//DefenseDeployments");
+            var gamePath = "means_comp.txt";
+            ForceCreateFile(dir, gamePath); // overwrite because we don't want conflicting information
+
+            for (var i = 0; i < armies.Count; i++)
+            {
+                var dict = armies[i];
+                var armyData = new JArray();
+
+                foreach (var kvp in dict)
+                {
+                    var entry = new JObject();
+                    entry["territoryID"] = (int)kvp.Key;
+                    entry["armies"] = new JArray(kvp.Value);
+
+                    armyData.Add(entry);
+                }
+
+                var data = new JObject();
+                data["turnNumber"] = i;
+                data["deployments"] = armyData;
+
                 AppendToFile(data.ToString() + '!', dir, gamePath);
             }
         }
@@ -134,7 +206,7 @@ namespace WarLight.Shared.AI.Common.Util
             return data;
         }
 
-        private static JObject CreateDefenseDeploymentJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
+        private static JObject CreateDeploymentJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
         {
             var armyData = new JArray();
             foreach (KeyValuePair<TerritoryIDType, double> kvp in armies)

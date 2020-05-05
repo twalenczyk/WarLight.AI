@@ -32,6 +32,8 @@ namespace WarLight.Shared.AI.Snowbird
 
             // initialize all lists if possible
             this.DefenseDeploymentMeansPerTurn = Parser.GetDefenseDeploymentMeans(mapID);
+
+            this.AttackDeploymentMeansPerTurn = Parser.GetAttackDeploymentMeans(mapID);
         }
 
         public Dictionary<TerritoryIDType, double> GetStandingArmyMean(IEnumerable<TerritoryIDType> territories, int turnNumber)
