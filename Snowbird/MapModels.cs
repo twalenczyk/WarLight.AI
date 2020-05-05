@@ -9,25 +9,46 @@ namespace WarLight.Shared.AI.Snowbird
     public class MapModels
     {
         public MapIDType MapID;
-        private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnMean;
-        private List<Dictionary<TerritoryIDType, List<double>>> StandingArmyMeansComprehensiveDataPerTurn;
-        private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnVariance;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> StandingArmiesPerTurnCorrelations;
-        private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentMeansPerTurn;
-        private List<Dictionary<TerritoryIDType, List<double>>> DefenseDeploymentMeansComprehensiveDataPerTurn;
-        private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentVariancesPerTurn;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefenseDeploymentCorrelationsPerTurn;
-        private List<Dictionary<TerritoryIDType, double>> DefensePowerMeansPerTurn;
-        private List<Dictionary<TerritoryIDType, double>> DefensePowerVariancesPerTurn;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefensePowerCorrelationsPerTurn;
+
+        /*
+         * Attack deployment vectors.
+         */
         private List<Dictionary<TerritoryIDType, double>> AttackDeploymentMeansPerTurn;
         private List<Dictionary<TerritoryIDType, List<double>>> AttackDeploymentMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> AttackDeploymentVariancesPerTurn;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackDeploymentCorrelationsPerTurn;
+
+        /*
+         * Attack power vectors.
+         */
         private List<Dictionary<TerritoryIDType, double>> AttackPowerMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, List<double>>> AttackPowerMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> AttackPowerVariancesPerTurn;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackPowerCorrelationsPerTurn;
 
+        /*
+         * Defense deployment vectors.
+         */
+        private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, List<double>>> DefenseDeploymentMeansComprehensiveDataPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentVariancesPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefenseDeploymentCorrelationsPerTurn;
+
+        /*
+         * Defemse power vectors.
+         */
+        private List<Dictionary<TerritoryIDType, double>> DefensePowerMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, List<double>>> DefensePowerMeansComprehensiveDataPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> DefensePowerVariancesPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefensePowerCorrelationsPerTurn;
+
+        /*
+         * Standing army vectors.
+         */
+        private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnMean;
+        private List<Dictionary<TerritoryIDType, List<double>>> StandingArmyMeansComprehensiveDataPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnVariance;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> StandingArmiesPerTurnCorrelations;
 
         public MapModels(MapIDType mapID)
         {
@@ -205,6 +226,7 @@ namespace WarLight.Shared.AI.Snowbird
                 for (var index = 0; index < this.StandingArmyMeansComprehensiveDataPerTurn.Count; index++)
                 {
                     this.AttackPowerMeansPerTurn.Add(new Dictionary<TerritoryIDType, double>());
+                    this.AttackPowerMeansComprehensiveDataPerTurn.Add(new Dictionary<TerritoryIDType, List<double>>());
 
                     foreach (var kvp in this.StandingArmyMeansComprehensiveDataPerTurn[index])
                     {
@@ -213,16 +235,17 @@ namespace WarLight.Shared.AI.Snowbird
 
                         if (this.AttackDeploymentMeansComprehensiveDataPerTurn[index].ContainsKey(territoryID))
                         {
-                            this.AttackPowerMeansPerTurn[index][territoryID] = kvp.Value
+                            this.AttackPowerMeansComprehensiveDataPerTurn[index][territoryID] = kvp.Value
                                 .SelectMany(
                                     val => this.AttackDeploymentMeansComprehensiveDataPerTurn[index][territoryID].Select(
                                         deployment => val + deployment))
-                                .Average();
+                                .ToList();
+                            this.AttackPowerMeansPerTurn[index][territoryID] = this.AttackPowerMeansComprehensiveDataPerTurn[index][territoryID].Average();
                         }
                         else
                         {
                             // no deployments, so it's just the average standing army on that turn
-                            // TODO: Consider adding a comprehensive structure for this random variable.
+                            this.AttackPowerMeansComprehensiveDataPerTurn[index][territoryID] = this.StandingArmyMeansComprehensiveDataPerTurn[index][territoryID];
                             this.AttackPowerMeansPerTurn[index][territoryID] = this.StandingArmiesPerTurnMean[index][territoryID];
                         }
                     }
@@ -390,10 +413,12 @@ namespace WarLight.Shared.AI.Snowbird
 
                 // the mean for this random variable is the average of the different deployments and standing army power
                 this.DefensePowerMeansPerTurn = new List<Dictionary<TerritoryIDType, double>>();
+                this.DefensePowerMeansComprehensiveDataPerTurn = new List<Dictionary<TerritoryIDType, List<double>>>();
 
                 for (var index = 0; index < this.StandingArmyMeansComprehensiveDataPerTurn.Count; index++)
                 {
                     this.DefensePowerMeansPerTurn.Add(new Dictionary<TerritoryIDType, double>());
+                    this.DefensePowerMeansComprehensiveDataPerTurn.Add(new Dictionary<TerritoryIDType, List<double>>());
 
                     foreach (var kvp in this.StandingArmyMeansComprehensiveDataPerTurn[index])
                     {
@@ -402,16 +427,18 @@ namespace WarLight.Shared.AI.Snowbird
 
                         if (this.DefenseDeploymentMeansComprehensiveDataPerTurn[index].ContainsKey(territoryID))
                         {
-                            this.DefensePowerMeansPerTurn[index][territoryID] = kvp.Value
+                            this.DefensePowerMeansComprehensiveDataPerTurn[index][territoryID] = kvp.Value
                                 .SelectMany(
                                     val => this.DefenseDeploymentMeansComprehensiveDataPerTurn[index][territoryID].Select(
                                         deployment => val + deployment))
-                                .Average();
+                                .ToList();
+                            this.DefensePowerMeansPerTurn[index][territoryID] = this.DefensePowerMeansComprehensiveDataPerTurn[index][territoryID].Average();
                         }
                         else
                         {
                             // no deployments, so it's just the average standing army on that turn
                             // TODO: Consider adding a comprehensive structure for this random variable.
+                            this.DefensePowerMeansComprehensiveDataPerTurn[index][territoryID] = this.StandingArmyMeansComprehensiveDataPerTurn[index][territoryID];
                             this.DefensePowerMeansPerTurn[index][territoryID] = this.StandingArmiesPerTurnMean[index][territoryID];
                         }
                     }
