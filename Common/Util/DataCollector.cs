@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 namespace WarLight.Shared.AI.Common.Util
 {
     /// <summary>
-    /// Contains methods for writing data collecting throughout a game.
+    /// Contains methods for writing data collected throughout a game.
     /// </summary>
     public static class DataCollector
     {
@@ -83,7 +83,7 @@ namespace WarLight.Shared.AI.Common.Util
 
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Raw//Maps//" + mapID.ToString() + "//AttackDeployments");
             var gamePath = currentGameID.ToString() + ".txt";
-            AppendToFile(turnData.ToString(), dir, gamePath);
+            AppendToFile(turnData.ToString() + '!', dir, gamePath);
         }
 
         public static void WriteGameDefenseDeploymentData(TerritoryIDType terrID, int armiesDeployed, MapIDType mapID)
@@ -99,7 +99,7 @@ namespace WarLight.Shared.AI.Common.Util
 
             var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Raw//Maps//" + mapID.ToString() + "//DefenseDeployments");
             var gamePath = currentGameID.ToString() + ".txt";
-            AppendToFile(turnData.ToString(), dir, gamePath);
+            AppendToFile(turnData.ToString() + '!', dir, gamePath);
         }
 
         private static JObject CreateStandingArmyJson(IEnumerable<KeyValuePair<TerritoryIDType, double>> armies, int turnNumber)
