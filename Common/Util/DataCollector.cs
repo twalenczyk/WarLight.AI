@@ -152,7 +152,7 @@ namespace WarLight.Shared.AI.Common.Util
         public static void WriteMapStandingArmyMeans(List<Dictionary<TerritoryIDType, double>> armies, MapIDType mapID)
         {
             // create the JSON object for the turn.
-            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "StandingArmies");
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//StandingArmies");
             var gamePath = "means.txt";
             ForceCreateFile(dir, gamePath); // overwrite because we don't want conflicting information
 
@@ -168,7 +168,7 @@ namespace WarLight.Shared.AI.Common.Util
         public static void WriteMapStandingArmyMeansComprehensiveData(List<Dictionary<TerritoryIDType, List<double>>> armies, MapIDType mapID)
         {
             // create the JSON object for the turn.
-            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "StandingArmies");
+            var dir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "DataCollection//Consolidated//Maps//" + mapID.ToString() + "//StandingArmies");
             var gamePath = "means_comp.txt";
             ForceCreateFile(dir, gamePath); // overwrite because we don't want conflicting information
 
