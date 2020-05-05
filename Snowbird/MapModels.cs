@@ -181,6 +181,61 @@ namespace WarLight.Shared.AI.Snowbird
 
         /*
          * *********************
+         * Attack Power Methods
+         * *********************
+         */
+        public Dictionary<TerritoryIDType, double> GetAttackPowerMeans(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        {
+            // unlike other methods in this class, we create this statistic from dat on our hands
+            if (this.AttackPowerMeansPerTurn == null)
+            {
+                if (this.StandingArmyMeansComprehensiveDataPerTurn == null)
+                {
+                    this.StandingArmyMeansComprehensiveDataPerTurn = Parser.GetStandingArmyComprehensive(this.MapID);
+                }
+
+                if (this.AttackDeploymentMeansComprehensiveDataPerTurn == null)
+                {
+                    this.AttackDeploymentMeansComprehensiveDataPerTurn = Parser.GetAttackDeploymentsMeansComprehensiveData(this.MapID);
+                }
+
+                // the mean for this random variable is the average of the different deployments and standing army power
+                this.AttackPowerMeansPerTurn = new List<Dictionary<TerritoryIDType, double>>();
+
+                for (var index = 0; index < this.StandingArmyMeansComprehensiveDataPerTurn.Count; index++)
+                {
+                    this.AttackPowerMeansPerTurn.Add(new Dictionary<TerritoryIDType, double>());
+
+                    foreach (var kvp in this.StandingArmyMeansComprehensiveDataPerTurn[index])
+                    {
+                        // for each territory and each standing army figure, add the various deployments to that territory
+                        var territoryID = kvp.Key;
+
+                        if (this.AttackDeploymentMeansComprehensiveDataPerTurn[index].ContainsKey(territoryID))
+                        {
+                            this.AttackPowerMeansPerTurn[index][territoryID] = kvp.Value
+                                .SelectMany(
+                                    val => this.AttackDeploymentMeansComprehensiveDataPerTurn[index][territoryID].Select(
+                                        deployment => val + deployment))
+                                .Average();
+                        }
+                        else
+                        {
+                            // no deployments, so it's just the average standing army on that turn
+                            // TODO: Consider adding a comprehensive structure for this random variable.
+                            this.AttackPowerMeansPerTurn[index][territoryID] = this.StandingArmiesPerTurnMean[index][territoryID];
+                        }
+                    }
+                }
+            }
+
+            var turn = turnNumber >= this.AttackPowerMeansPerTurn.Count ? this.AttackPowerMeansPerTurn.Count - 1 : turnNumber; // heuristic
+            return this.AttackPowerMeansPerTurn[turn].Where(kvp => territories.Contains(kvp.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+
+        /*
+         * *********************
          * Defense Deployment Methods
          * *********************
          */
@@ -311,6 +366,60 @@ namespace WarLight.Shared.AI.Snowbird
                         kvp.Value.Where(pvk => territories.Contains(pvk.Key))))
                 .Where(kvp => territories.Contains(kvp.Key))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(pvk => pvk.Key, pvk => pvk.Value));
+        }
+
+        /*
+         * *********************
+         * Defense Power Methods
+         * *********************
+         */
+        public Dictionary<TerritoryIDType, double> GetDefensePowerMeans(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        {
+            // unlike other methods in this class, we create this statistic from dat on our hands
+            if (this.DefensePowerMeansPerTurn == null)
+            {
+                if (this.StandingArmyMeansComprehensiveDataPerTurn == null)
+                {
+                    this.StandingArmyMeansComprehensiveDataPerTurn = Parser.GetStandingArmyComprehensive(this.MapID);
+                }
+
+                if (this.DefenseDeploymentMeansComprehensiveDataPerTurn == null)
+                {
+                    this.DefenseDeploymentMeansComprehensiveDataPerTurn = Parser.GetDefenseDeploymentsMeansComprehensiveData(this.MapID);
+                }
+
+                // the mean for this random variable is the average of the different deployments and standing army power
+                this.DefensePowerMeansPerTurn = new List<Dictionary<TerritoryIDType, double>>();
+
+                for (var index = 0; index < this.StandingArmyMeansComprehensiveDataPerTurn.Count; index++)
+                {
+                    this.DefensePowerMeansPerTurn.Add(new Dictionary<TerritoryIDType, double>());
+
+                    foreach (var kvp in this.StandingArmyMeansComprehensiveDataPerTurn[index])
+                    {
+                        // for each territory and each standing army figure, add the various deployments to that territory
+                        var territoryID = kvp.Key;
+
+                        if (this.DefenseDeploymentMeansComprehensiveDataPerTurn[index].ContainsKey(territoryID))
+                        {
+                            this.DefensePowerMeansPerTurn[index][territoryID] = kvp.Value
+                                .SelectMany(
+                                    val => this.DefenseDeploymentMeansComprehensiveDataPerTurn[index][territoryID].Select(
+                                        deployment => val + deployment))
+                                .Average();
+                        }
+                        else
+                        {
+                            // no deployments, so it's just the average standing army on that turn
+                            // TODO: Consider adding a comprehensive structure for this random variable.
+                            this.DefensePowerMeansPerTurn[index][territoryID] = this.StandingArmiesPerTurnMean[index][territoryID];
+                        }
+                    }
+                }
+            }
+
+            var turn = turnNumber >= this.AttackPowerMeansPerTurn.Count ? this.AttackPowerMeansPerTurn.Count - 1 : turnNumber; // heuristic
+            return this.AttackPowerMeansPerTurn[turn].Where(kvp => territories.Contains(kvp.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         /*
