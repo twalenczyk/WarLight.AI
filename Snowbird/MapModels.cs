@@ -10,15 +10,18 @@ namespace WarLight.Shared.AI.Snowbird
     {
         public MapIDType MapID;
         private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnMean;
+        private List<Dictionary<TerritoryIDType, List<double>>> StandingArmyMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnVariance;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> StandingArmiesPerTurnCorrelations;
         private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, List<double>>> DefenseDeploymentMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentVariancesPerTurn;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefenseDeploymentCorrelationsPerTurn;
         private List<Dictionary<TerritoryIDType, double>> DefensePowerMeansPerTurn;
         private List<Dictionary<TerritoryIDType, double>> DefensePowerVariancesPerTurn;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefensePowerCorrelationsPerTurn;
         private List<Dictionary<TerritoryIDType, double>> AttackDeploymentMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, List<double>>> AttackDeploymentMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> AttackDeploymentVariancesPerTurn;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackDeploymentCorrelationsPerTurn;
         private List<Dictionary<TerritoryIDType, double>> AttackPowerMeansPerTurn;
@@ -65,14 +68,14 @@ namespace WarLight.Shared.AI.Snowbird
             if (!(this.AttackDeploymentVariancesPerTurn is List<Dictionary<TerritoryIDType, double>>))
             {
                 // initialize the vector
-                var attackDeploymentMeansComprehensiveData = Parser.GetAttackDeploymentsMeansComprehensiveData(this.MapID);
+                this.AttackDeploymentMeansComprehensiveDataPerTurn = Parser.GetAttackDeploymentsMeansComprehensiveData(this.MapID);
                 this.AttackDeploymentVariancesPerTurn = new List<Dictionary<TerritoryIDType, double>>();
 
                 // compute the variance for each turn and each territory
-                for (int i = 0; i < attackDeploymentMeansComprehensiveData.Count; i++)
+                for (int i = 0; i < this.AttackDeploymentMeansComprehensiveDataPerTurn.Count; i++)
                 {
                     this.AttackDeploymentVariancesPerTurn.Add(new Dictionary<TerritoryIDType, double>());
-                    var armyData = attackDeploymentMeansComprehensiveData[i];
+                    var armyData = this.AttackDeploymentMeansComprehensiveDataPerTurn[i];
 
                     foreach (var kvp in armyData)
                     {
@@ -103,14 +106,14 @@ namespace WarLight.Shared.AI.Snowbird
                 }
 
                 // considering caching to improve performance
-                var attackDeploymentsComprehensiveData = Parser.GetAttackDeploymentsMeansComprehensiveData(this.MapID); // TODO store this data locally to prevent redundant parsing
+                this.AttackDeploymentMeansComprehensiveDataPerTurn = Parser.GetAttackDeploymentsMeansComprehensiveData(this.MapID); // TODO store this data locally to prevent redundant parsing
                 var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
-                for (var index = 0; index < attackDeploymentsComprehensiveData.Count; index++)
+                for (var index = 0; index < this.AttackDeploymentMeansComprehensiveDataPerTurn.Count; index++)
                 {
                     correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
-                    var armyData = attackDeploymentsComprehensiveData[index];
+                    var armyData = this.AttackDeploymentMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
                     foreach (var ikvp in armyData)
@@ -199,14 +202,14 @@ namespace WarLight.Shared.AI.Snowbird
             if (!(this.DefenseDeploymentVariancesPerTurn is List<Dictionary<TerritoryIDType, double>>))
             {
                 // initialize the vector
-                var defenseDeploymentMeansComprehensiveData = Parser.GetDefenseDeploymentsMeansComprehensiveData(this.MapID);
+                this.DefenseDeploymentMeansComprehensiveDataPerTurn = Parser.GetDefenseDeploymentsMeansComprehensiveData(this.MapID);
                 this.DefenseDeploymentVariancesPerTurn = new List<Dictionary<TerritoryIDType, double>>();
 
                 // compute the variance for each turn and each territory
-                for (int i = 0; i < defenseDeploymentMeansComprehensiveData.Count; i++)
+                for (int i = 0; i < this.DefenseDeploymentMeansComprehensiveDataPerTurn.Count; i++)
                 {
                     this.DefenseDeploymentVariancesPerTurn.Add(new Dictionary<TerritoryIDType, double>());
-                    var armyData = defenseDeploymentMeansComprehensiveData[i];
+                    var armyData = this.DefenseDeploymentMeansComprehensiveDataPerTurn[i];
 
                     foreach (var kvp in armyData)
                     {
@@ -237,14 +240,14 @@ namespace WarLight.Shared.AI.Snowbird
                 }
 
                 // considering caching to improve performance
-                var defenseDeploymentsComprehensiveData = Parser.GetDefenseDeploymentsMeansComprehensiveData(this.MapID); // TODO store this data locally to prevent redundant parsing
+                this.DefenseDeploymentMeansComprehensiveDataPerTurn = Parser.GetDefenseDeploymentsMeansComprehensiveData(this.MapID); // TODO store this data locally to prevent redundant parsing
                 var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
-                for (var index = 0; index < defenseDeploymentsComprehensiveData.Count; index++)
+                for (var index = 0; index < this.DefenseDeploymentMeansComprehensiveDataPerTurn.Count; index++)
                 {
                     correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
-                    var armyData = defenseDeploymentsComprehensiveData[index];
+                    var armyData = this.DefenseDeploymentMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
                     foreach (var ikvp in armyData)
@@ -332,14 +335,14 @@ namespace WarLight.Shared.AI.Snowbird
             if (!(this.StandingArmiesPerTurnVariance is List<Dictionary<TerritoryIDType, double>>))
             {
                 // initialize the vector
-                var standingArmiesComprehensive = Parser.GetStandingArmyComprehensive(this.MapID);
+                this.StandingArmyMeansComprehensiveDataPerTurn = Parser.GetStandingArmyComprehensive(this.MapID);
                 this.StandingArmiesPerTurnVariance = new List<Dictionary<TerritoryIDType, double>>();
 
                 // compute the variance for each turn and each territory
-                for (int i = 0; i < standingArmiesComprehensive.Count; i++) 
+                for (int i = 0; i < this.StandingArmyMeansComprehensiveDataPerTurn.Count; i++) 
                 {
                     this.StandingArmiesPerTurnVariance.Add(new Dictionary<TerritoryIDType, double>());
-                    var armyData = standingArmiesComprehensive[i];
+                    var armyData = this.StandingArmyMeansComprehensiveDataPerTurn[i];
 
                     foreach (var kvp in armyData) 
                     {
@@ -371,15 +374,15 @@ namespace WarLight.Shared.AI.Snowbird
                 }
 
                 // considering caching to improve performance
-                var standingArmiesComprehensive = Parser.GetStandingArmyComprehensive(this.MapID);
+                this.StandingArmyMeansComprehensiveDataPerTurn = Parser.GetStandingArmyComprehensive(this.MapID);
                 var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
-                for (var index = 0; index < standingArmiesComprehensive.Count; index++)
+                for (var index = 0; index < this.StandingArmyMeansComprehensiveDataPerTurn.Count; index++)
                 {
                     correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     // per turn, calculate the expected value of the correlation
-                    var armyData = standingArmiesComprehensive[index];
+                    var armyData = this.StandingArmyMeansComprehensiveDataPerTurn[index];
                     foreach (var ikvp in armyData)
                     {
                         var i = ikvp.Key;
