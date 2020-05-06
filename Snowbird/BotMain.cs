@@ -138,9 +138,9 @@ namespace WarLight.Shared.AI.Snowbird
             // Test parser
             this.MapModel = new MapModels((MapIDType) 2);
             var territories = new List<TerritoryIDType>(new TerritoryIDType[] { (TerritoryIDType)1, (TerritoryIDType)5, (TerritoryIDType)8 });
-            this.StandingArmiesMean = this.MapModel.GetStandingArmyMean(territories, 1);
-            this.StandingArmiesVariance = this.MapModel.GetStandingArmyVariances(territories, 1);
-            this.StandingArmiesCorrelations = this.MapModel.GetStandingArmyCorrelations(territories, 1);
+            this.StandingArmiesMean = this.MapModel.GetAttackPowerMeans(territories, 10);
+            this.StandingArmiesVariance = this.MapModel.GetAttackPowerVariances(territories, 10);
+            this.StandingArmiesCorrelations = this.MapModel.GetAttackPowerCorrelations(territories, 10);
 
             // define the mean vector
             Vector<double> mu = DenseVector.OfArray(this.StandingArmiesMean.Values.ToArray());

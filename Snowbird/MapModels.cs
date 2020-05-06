@@ -124,8 +124,12 @@ namespace WarLight.Shared.AI.Snowbird
             this.SetAttackPowerCorrelations();
             var turn = turnNumber >= this.AttackPowerMeansPerTurn.Count ? this.AttackPowerMeansPerTurn.Count - 1 : turnNumber; // heuristic
             return this.AttackPowerCorrelationsPerTurn[turn]
+                .Select(
+                    kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
+                        kvp.Key,
+                        kvp.Value.Where(pvk => territories.Contains(pvk.Key))))
                 .Where(kvp => territories.Contains(kvp.Key))
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(pvk => pvk.Key, pvk => pvk.Value));
         }
 
         /*
@@ -191,8 +195,12 @@ namespace WarLight.Shared.AI.Snowbird
             this.SetDefensePowerCorrelations();
             var turn = turnNumber >= this.AttackPowerMeansPerTurn.Count ? this.AttackPowerMeansPerTurn.Count - 1 : turnNumber; // heuristic
             return this.DefensePowerCorrelationsPerTurn[turn]
+                .Select(
+                    kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
+                        kvp.Key,
+                        kvp.Value.Where(pvk => territories.Contains(pvk.Key))))
                 .Where(kvp => territories.Contains(kvp.Key))
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(pvk => pvk.Key, pvk => pvk.Value));
         }
 
         /*
@@ -231,6 +239,11 @@ namespace WarLight.Shared.AI.Snowbird
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(pvk => pvk.Key, pvk => pvk.Value));
         }
 
+        /*
+         * *********************
+         * Helper Methods
+         * *********************
+         */
         private void SetAttackDeploymentMeans()
         {
             if (this.AttackDeploymentMeansPerTurn == null)
@@ -262,7 +275,7 @@ namespace WarLight.Shared.AI.Snowbird
                     {
                         var territoryID = kvp.Key;
                         var relevantMean = this.AttackDeploymentMeansPerTurn[i][territoryID];
-                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Average();
+                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Sum() / (kvp.Value.Count - 1); // sample formula
                         this.AttackDeploymentVariancesPerTurn[i][territoryID] = variance;
                     }
                 }
@@ -278,10 +291,10 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetAttackDeploymentMeansComprehensiveData();
                 this.SetAttackDeploymentVariances();
 
-                var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.AttackDeploymentCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
                 for (var index = 0; index < this.AttackDeploymentMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.AttackDeploymentCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.AttackDeploymentMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -290,7 +303,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.AttackDeploymentMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        correlationRandomVariables[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.AttackDeploymentCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -298,38 +311,8 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.AttackDeploymentMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Average();
-                            correlationRandomVariables[index][i][j] = ijCorrMean;
-                        }
-                    }
-                }
-
-                this.AttackDeploymentCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
-
-                // correlation between the two random variables for each turn
-                for (var index = 0; index < this.DefenseDeploymentVariancesPerTurn.Count; index++)
-                {
-                    this.AttackDeploymentCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
-
-                    // improve efficienes by storing ij = ji
-                    foreach (var ikvp in this.AttackDeploymentVariancesPerTurn[index])
-                    {
-                        var i = ikvp.Key;
-                        this.AttackDeploymentCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
-
-                        foreach (var jkvp in this.AttackDeploymentVariancesPerTurn[index])
-                        {
-                            var j = jkvp.Key;
-                            var iSig = ikvp.Value;
-                            var jSig = jkvp.Value;
-
-                            if (iSig == 0 || jSig == 0)
-                            {
-                                // throw an error!
-                            }
-
-                            var correlationValue = correlationRandomVariables[index][i][j] / (iSig * jSig);
-                            this.AttackDeploymentCorrelationsPerTurn[index][i][j] = correlationValue;
+                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            this.AttackDeploymentCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -346,7 +329,7 @@ namespace WarLight.Shared.AI.Snowbird
                     .Select(dict => dict
                         .Select(kvp => new KeyValuePair<TerritoryIDType, double>(
                             kvp.Key,
-                            kvp.Value.Average()))
+                            kvp.Value.Sum() / (kvp.Value.Count - 1))) // sample formula
                         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value))
                     .ToList();
             }
@@ -408,7 +391,7 @@ namespace WarLight.Shared.AI.Snowbird
                     {
                         var territoryID = kvp.Key;
                         var relevantMean = this.AttackPowerMeansPerTurn[i][territoryID];
-                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Average();
+                        var variance = kvp.Value.Select(value => Math.Pow(value - relevantMean, 2)).Sum() / (kvp.Value.Count - 1); // sample formula
                         this.AttackPowerVariancesPerTurn[i][territoryID] = variance;
                     }
                 }
@@ -425,12 +408,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetAttackPowerVariances();
 
                 // considering caching to improve performance
-                var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.AttackPowerCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.AttackPowerMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.AttackPowerCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.AttackPowerMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -439,7 +422,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.AttackPowerMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        correlationRandomVariables[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.AttackPowerCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -447,32 +430,8 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.AttackPowerMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Average();
-                            correlationRandomVariables[index][i][j] = ijCorrMean;
-                        }
-                    }
-                }
-
-                this.AttackPowerCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
-
-                // correlation between the two random variables for each turn
-                for (var index = 0; index < this.AttackPowerVariancesPerTurn.Count; index++)
-                {
-                    this.DefenseDeploymentCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
-
-                    // improve efficienes by storing ij = ji
-                    foreach (var ikvp in this.AttackPowerVariancesPerTurn[index])
-                    {
-                        var i = ikvp.Key;
-                        this.AttackPowerCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
-
-                        foreach (var jkvp in this.AttackPowerVariancesPerTurn[index])
-                        {
-                            var j = jkvp.Key;
-                            var iSig = ikvp.Value;
-                            var jSig = jkvp.Value;
-                            var correlationValue = correlationRandomVariables[index][i][j] / (iSig * jSig);
-                            this.AttackPowerCorrelationsPerTurn[index][i][j] = correlationValue;
+                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            this.AttackPowerCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -510,7 +469,7 @@ namespace WarLight.Shared.AI.Snowbird
                     {
                         var territoryID = kvp.Key;
                         var relevantMean = this.DefenseDeploymentMeansPerTurn[i][territoryID];
-                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Average();
+                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Sum() / (kvp.Value.Count - 1); // sample formula
                         this.DefenseDeploymentVariancesPerTurn[i][territoryID] = variance;
                     }
                 }
@@ -527,12 +486,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetDefenseDeploymentVariances();
 
                 // considering caching to improve performance
-                var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.DefenseDeploymentCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.DefenseDeploymentMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.DefenseDeploymentCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.DefenseDeploymentMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -541,7 +500,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.DefenseDeploymentMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        correlationRandomVariables[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.DefenseDeploymentCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -549,32 +508,8 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.DefenseDeploymentMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Average();
-                            correlationRandomVariables[index][i][j] = ijCorrMean;
-                        }
-                    }
-                }
-
-                this.DefenseDeploymentCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
-
-                // correlation between the two random variables for each turn
-                for (var index = 0; index < this.DefenseDeploymentVariancesPerTurn.Count; index++)
-                {
-                    this.DefenseDeploymentCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
-
-                    // improve efficienes by storing ij = ji
-                    foreach (var ikvp in this.DefenseDeploymentVariancesPerTurn[index])
-                    {
-                        var i = ikvp.Key;
-                        this.DefenseDeploymentCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
-
-                        foreach (var jkvp in this.DefenseDeploymentVariancesPerTurn[index])
-                        {
-                            var j = jkvp.Key;
-                            var iSig = ikvp.Value;
-                            var jSig = jkvp.Value;
-                            var correlationValue = correlationRandomVariables[index][i][j] / (iSig * jSig);
-                            this.DefenseDeploymentCorrelationsPerTurn[index][i][j] = correlationValue;
+                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            this.DefenseDeploymentCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -655,7 +590,7 @@ namespace WarLight.Shared.AI.Snowbird
                     {
                         var territoryID = kvp.Key;
                         var relevantMean = this.DefensePowerMeansPerTurn[i][territoryID];
-                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Average();
+                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Sum() / (kvp.Value.Count - 1); // sample formula
                         this.DefensePowerVariancesPerTurn[i][territoryID] = variance;
                     }
                 }
@@ -672,12 +607,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetDefensePowerVariances();
 
                 // considering caching to improve performance
-                var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.DefensePowerCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.DefensePowerMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.DefensePowerCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.DefensePowerMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -686,7 +621,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.DefensePowerMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        correlationRandomVariables[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.DefensePowerCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -694,32 +629,8 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.DefensePowerMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Average();
-                            correlationRandomVariables[index][i][j] = ijCorrMean;
-                        }
-                    }
-                }
-
-                this.DefensePowerCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
-
-                // correlation between the two random variables for each turn
-                for (var index = 0; index < this.DefensePowerVariancesPerTurn.Count; index++)
-                {
-                    this.DefensePowerCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
-
-                    // improve efficienes by storing ij = ji
-                    foreach (var ikvp in this.DefensePowerVariancesPerTurn[index])
-                    {
-                        var i = ikvp.Key;
-                        this.DefensePowerCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
-
-                        foreach (var jkvp in this.DefensePowerVariancesPerTurn[index])
-                        {
-                            var j = jkvp.Key;
-                            var iSig = ikvp.Value;
-                            var jSig = jkvp.Value;
-                            var correlationValue = correlationRandomVariables[index][i][j] / (iSig * jSig);
-                            this.DefensePowerCorrelationsPerTurn[index][i][j] = correlationValue;
+                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            this.DefensePowerCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -758,7 +669,7 @@ namespace WarLight.Shared.AI.Snowbird
                     {
                         var territoryID = kvp.Key;
                         var relevantMean = this.StandingArmiesPerTurnMean[i][territoryID];
-                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Average();
+                        var variance = kvp.Value.Select(value => Math.Pow(relevantMean - value, 2)).Sum() / (kvp.Value.Count - 1); // sample formula
                         this.StandingArmiesPerTurnVariance[i].Add(territoryID, variance);
                     }
                 }
@@ -775,12 +686,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetStandingArmiesVariances();
 
                 // considering caching to improve performance
-                var correlationRandomVariables = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.StandingArmiesPerTurnCorrelations = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.StandingArmyMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    correlationRandomVariables.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.StandingArmiesPerTurnCorrelations.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     // per turn, calculate the expected value of the correlation
                     var armyData = this.StandingArmyMeansComprehensiveDataPerTurn[index];
                     foreach (var ikvp in armyData)
@@ -788,7 +699,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.StandingArmiesPerTurnMean[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        correlationRandomVariables[index].Add(i, new Dictionary<TerritoryIDType, double>());
+                        this.StandingArmiesPerTurnCorrelations[index].Add(i, new Dictionary<TerritoryIDType, double>());
 
                         foreach (var jkvp in armyData)
                         {
@@ -796,32 +707,8 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.StandingArmiesPerTurnMean[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Average();
-                            correlationRandomVariables[index][i][j] = ijCorrMean;
-                        }
-                    }
-                }
-
-                this.StandingArmiesPerTurnCorrelations = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
-
-                // correlation between the two random variables for each turn
-                for (var index = 0; index < this.StandingArmiesPerTurnVariance.Count; index++)
-                {
-                    this.StandingArmiesPerTurnCorrelations.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
-
-                    // improve efficienes by storing ij = ji
-                    foreach (var ikvp in this.StandingArmiesPerTurnVariance[index])
-                    {
-                        var i = ikvp.Key;
-                        this.StandingArmiesPerTurnCorrelations[index][i] = new Dictionary<TerritoryIDType, double>();
-
-                        foreach (var jkvp in this.StandingArmiesPerTurnVariance[index])
-                        {
-                            var j = jkvp.Key;
-                            var iSig = ikvp.Value;
-                            var jSig = jkvp.Value;
-                            var correlationValue = correlationRandomVariables[index][i][j] / (iSig * jSig);
-                            this.StandingArmiesPerTurnCorrelations[index][i][j] = correlationValue;
+                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            this.StandingArmiesPerTurnCorrelations[index][i][j] = ijCorrMean;
                         }
                     }
                 }

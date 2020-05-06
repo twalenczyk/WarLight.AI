@@ -432,7 +432,14 @@ namespace WarLight.Shared.AI.Snowbird
                 }
             }
 
-            DataCollector.WriteMapDefenseDeploymentMeansComprehensiveData(rawData, mapID);
+            if (isAttackQuery)
+            {
+                DataCollector.WriteMapAttackDeploymentMeansComprehensiveData(rawData, mapID);
+            }
+            else
+            {
+                DataCollector.WriteMapDefenseDeploymentMeansComprehensiveData(rawData, mapID);
+            }
             return rawData;
         }
 
