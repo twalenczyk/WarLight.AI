@@ -311,7 +311,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.AttackDeploymentMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
                             this.AttackDeploymentCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
@@ -417,6 +417,7 @@ namespace WarLight.Shared.AI.Snowbird
                     var armyData = this.AttackPowerMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
+                    // TODO cache the variance comprehensive data
                     foreach (var ikvp in armyData)
                     {
                         var i = ikvp.Key;
@@ -430,7 +431,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.AttackPowerMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
                             this.AttackPowerCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
@@ -508,7 +509,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.DefenseDeploymentMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
                             this.DefenseDeploymentCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
@@ -629,7 +630,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.DefensePowerMeansPerTurn[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
                             this.DefensePowerCorrelationsPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
@@ -707,7 +708,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jMean = this.StandingArmiesPerTurnMean[index][j];
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
-                            var ijCorrMean = iVarianceVector.SelectMany(ivar => jVarianceVector.Select(jvar => ivar * jvar)).Sum() / (iVarianceVector.Count() * jVarianceVector.Count() - 1);
+                            var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
                             this.StandingArmiesPerTurnCorrelations[index][i][j] = ijCorrMean;
                         }
                     }
