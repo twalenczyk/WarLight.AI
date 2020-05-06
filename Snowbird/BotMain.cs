@@ -194,7 +194,6 @@ namespace WarLight.Shared.AI.Snowbird
             Vector<double> b = DenseVector.OfArray(bBase);
 
             // generate a random non-singular matrix for testing
-            G = CreateMatrix.RandomPositiveDefinite<double>(G.ColumnCount);
             var deploymentDistribution = this.ComputeOptimalDistribution(A, b, mu, G);
             var dict = deploymentDistribution.Zip(territories, (dist, terr) => new KeyValuePair<TerritoryIDType, double>(terr, dist)).ToDictionary(pair => pair.Key);
 
@@ -238,14 +237,14 @@ namespace WarLight.Shared.AI.Snowbird
             yBarBase[A.RowCount - 1] = 1;
             lamBarBase[A.RowCount - 1] = 0;
 
-            Vector<double> xBar = DenseVector.OfArray(xBarBase);
-            Vector<double> yBar = DenseVector.OfArray(yBarBase);
-            Vector<double> lamBar = DenseVector.OfArray(lamBarBase);
+            Vector<double> xBar = CreateVector.Dense(mu.Count, 1.0 / mu.Count);
+            Vector<double> yBar = CreateVector.Dense(A.RowCount, index => index == 0 ? 0 : 1.0 / mu.Count);
+            Vector<double> lamBar = CreateVector.Dense(A.RowCount, index => index == 0 ? 1.0 : 0);
 
             // find the affine scaling measures
-            Matrix<double> Y = DenseMatrix.OfDiagonalArray(yBarBase);
-            Matrix<double> Lambda = DenseMatrix.OfDiagonalArray(yBarBase);
-            Vector<double> e = DenseVector.OfEnumerable(mu.Select(val => 1.0)); // quick creation of the all 1 vector
+            Matrix<double> Y = DenseMatrix.OfDiagonalVector(yBar);
+            Matrix<double> Lambda = DenseMatrix.OfDiagonalVector(lamBar);
+            Vector<double> e = CreateVector.Dense(mu.Count, 1.0); // quick creation of the all 1 vector
 
             // Get ahold of the initial affine step values to determine a good starting point.
             var compMeasure = yBar.DotProduct(lamBar) / m;
@@ -489,6 +488,11 @@ namespace WarLight.Shared.AI.Snowbird
 
         private Matrix<double> dx1Norm(Matrix<double> A, Vector<double> b, Vector<double> x)
         {
+            var a = A.Determinant();
+            if (a== 0)
+            {
+                // consider throwing an error
+            }
             return A;
         }
 
