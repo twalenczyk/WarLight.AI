@@ -259,22 +259,19 @@ namespace WarLight.Shared.AI.Snowbird
 
             // initialize variables
 
-            Vector<double> x;
-            Vector<double> y;
-            Vector<double> lambda;
-            Vector<double> distance;
             var x_prev = xBar;
             var y_prev = CreateVector.Dense(yBar.Count(), index => Math.Max(1, Math.Abs(yBar[index] + deltaYAff[index])));
             var lambda_prev = CreateVector.Dense(lamBar.Count(), index => Math.Max(1, Math.Abs(lamBar[index] + deltaLambdaAff[index])));
+            Vector<double> x = x_prev;
+            Vector<double> y = y_prev;
+            Vector<double> lambda = lambda_prev;
+            Vector<double> distance;
             Vector<double> totalSteps;
 
             // run the algorithm until?
             var tol = 0.000001;
             do
             {
-                x = x_prev;
-                y = y_prev;
-                lambda = lambda_prev;
 
                 // probably need to update rd rp compMeasure and sigma
                 // get affine scaling steps
@@ -301,9 +298,6 @@ namespace WarLight.Shared.AI.Snowbird
 
                 // minimize  a new function
                 // update vector
-                x_prev = x;
-                y_prev = DenseVector.OfVector(y);
-                lambda_prev = DenseVector.OfVector(lambda);
 
                 var distanceX = this.GetStep(totalSteps, 0, xBar.Count).Multiply(alphaHat);
                 var distanceY = this.GetStep(totalSteps, xBar.Count, yBar.Count).Multiply(alphaHat);
