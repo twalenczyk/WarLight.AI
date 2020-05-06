@@ -253,23 +253,19 @@ namespace WarLight.Shared.AI.Snowbird
             var rp = A * xBar - yBar - b;
 
             var affineTransforms = this.GetScalingSteps(A, G, Lambda, Y, rd, rp, compMeasure, sigma);
+            var deltaXAff = this.GetStep(affineTransforms, 0, xBar.Count);
+            var deltaYAff = this.GetStep(affineTransforms, xBar.Count, yBar.Count);
+            var deltaLambdaAff = this.GetStep(affineTransforms, xBar.Count + yBar.Count, lamBar.Count);
 
             // initialize variables
-            var yBase = new double[xBar.Count];
-            var lamBase = new double[xBar.Count];
-            for (var i = 0; i < xBar.Count; i++)
-            {
-                yBase[i] = Math.Max(1.0, Math.Abs(yBar[i] + this.GetDeltaY(affineTransforms, xBar.Count)[i]));
-                lamBase[i] = Math.Max(1.0, Math.Abs(lamBar[i] + this.GetDeltaLambda(affineTransforms, xBar.Count)[i]));
-            }
 
             Vector<double> x;
             Vector<double> y;
             Vector<double> lambda;
             Vector<double> distance;
             var x_prev = xBar;
-            var y_prev = DenseVector.OfArray(yBase);
-            var lambda_prev = DenseVector.OfArray(lamBase); // update with correct affine index
+            var y_prev = CreateVector.Dense(yBar.Count(), index => Math.Max(1, Math.Abs(yBar[index] + deltaYAff[index])));
+            var lambda_prev = CreateVector.Dense(lamBar.Count(), index => Math.Max(1, Math.Abs(lamBar[index] + deltaLambdaAff[index])));
             Vector<double> totalSteps;
 
             // run the algorithm until?
@@ -283,22 +279,24 @@ namespace WarLight.Shared.AI.Snowbird
                 // probably need to update rd rp compMeasure and sigma
                 // get affine scaling steps
                 affineTransforms = this.GetScalingSteps(A, G, Lambda, Y, rd, rp, compMeasure, sigma);
-                
+                deltaXAff = this.GetStep(affineTransforms, 0, xBar.Count);
+                deltaYAff = this.GetStep(affineTransforms, xBar.Count, yBar.Count);
+                deltaLambdaAff = this.GetStep(affineTransforms, xBar.Count + yBar.Count, lamBar.Count);
 
                 compMeasure = y.DotProduct(lambda) / m;
 
-                var alphaAffHat = this.MaxAlphaHatAff(y, lambda, this.GetDeltaY(affineTransforms, x.Count), this.GetDeltaLambda(affineTransforms, x.Count), tol);
-                var compMeasureAff = (y + this.GetDeltaY(affineTransforms, xBar.Count).Multiply(alphaAffHat)).DotProduct(lambda + this.GetDeltaLambda(affineTransforms, xBar.Count).Multiply(alphaAffHat)) / m;
+                var alphaAffHat = this.MaxAlphaHatAff(y, lambda, deltaYAff, deltaLambdaAff, tol);
+                var compMeasureAff = (y + deltaYAff.Multiply(alphaAffHat)).DotProduct(lambda + deltaLambdaAff.Multiply(alphaAffHat)) / m;
                 var centeringParam = Math.Pow(compMeasureAff / compMeasure, 3);
 
                 // Solve 16.67 for the new scaling steps
                 // I simply need to update the solution vector
-                totalSteps = this.GetTotalSteps(A, G, Lambda, Y, rd, rp, this.GetDeltaLambda(affineTransforms, x.Count), this.GetDeltaY(affineTransforms, x.Count), compMeasure, centeringParam);
+                totalSteps = this.GetTotalSteps(A, G, Lambda, Y, rd, rp, deltaLambdaAff, deltaYAff, compMeasure, centeringParam);
 
                 // for simplicity, let taus be the same
                 var tauk = 0.5; // TODO: refine this selection (e.g.  as iterates increase, tauk --> 1).
-                var alphaTauPri = this.MaxAlphaTau(y, this.GetDeltaY(affineTransforms, x.Count), tauk, tol);
-                var alphaTauDual = this.MaxAlphaTau(lambda, this.GetDeltaLambda(affineTransforms, x.Count), tauk, tol);
+                var alphaTauPri = this.MaxAlphaTau(y, deltaYAff, tauk, tol);
+                var alphaTauDual = this.MaxAlphaTau(lambda, deltaLambdaAff, tauk, tol);
                 var alphaHat = Math.Min(alphaTauPri, alphaTauDual);
 
                 // minimize  a new function
@@ -307,9 +305,9 @@ namespace WarLight.Shared.AI.Snowbird
                 y_prev = DenseVector.OfVector(y);
                 lambda_prev = DenseVector.OfVector(lambda);
 
-                var distanceX = this.GetDeltaX(affineTransforms, x.Count).Multiply(alphaHat);
-                var distanceY = this.GetDeltaY(affineTransforms, x.Count).Multiply(alphaHat);
-                var distanceLambda = this.GetDeltaLambda(affineTransforms, x.Count).Multiply(alphaHat);
+                var distanceX = this.GetStep(totalSteps, 0, xBar.Count).Multiply(alphaHat);
+                var distanceY = this.GetStep(totalSteps, xBar.Count, yBar.Count).Multiply(alphaHat);
+                var distanceLambda = this.GetStep(totalSteps, xBar.Count + yBar.Count, lamBar.Count).Multiply(alphaHat);
 
                 x += distanceX;
                 y += distanceY;
@@ -371,13 +369,13 @@ namespace WarLight.Shared.AI.Snowbird
         {
             Matrix<double> DeltaLambdaAff = DenseMatrix.OfDiagonalVector(lambdaAff);
             Matrix<double> DeltaYAff = DenseMatrix.OfDiagonalVector(yAff);
-            Vector<double> e = DenseVector.OfEnumerable(rd.Select(val => 1.0)); // quick creation of the all 1 vector
+            Vector<double> e = CreateVector.Dense(Y.RowCount, 1.0); // quick creation of the all 1 vector
 
             // Create the system of equations to solve using Newton's method
             // TODO: Use the CreateMatrix.DenseOfMatrixArray(...) function for the below purpose
             var cols = G.ColumnCount + Lambda.ColumnCount + Y.ColumnCount;
             var rows = G.RowCount + A.RowCount + Y.RowCount;
-            Matrix<double> newtonSystem = DenseMatrix.OfDiagonalArray(e.Select(val => -1.0).ToArray());
+            Matrix<double> newtonSystem = CreateMatrix.DenseDiagonal(rows, cols, -1.0);
             newtonSystem.SetSubMatrix(0, 0, G);
             newtonSystem.SetSubMatrix(0, G.ColumnCount + Lambda.ColumnCount, A.Transpose().Multiply(-1));
             newtonSystem.SetSubMatrix(G.RowCount, 0, A);
@@ -496,19 +494,9 @@ namespace WarLight.Shared.AI.Snowbird
             return A;
         }
 
-        private Vector<double> GetDeltaX(Vector<double> tuple, int size)
+        private Vector<double> GetStep(Vector<double> tuple, int index, int size)
         {
-            return DenseVector.OfEnumerable(tuple.SubVector(0, size));
-        }
-
-        private Vector<double> GetDeltaY(Vector<double> tuple, int size)
-        {
-            return DenseVector.OfEnumerable(tuple.SubVector(size, size));
-        }
-
-        private Vector<double> GetDeltaLambda(Vector<double> tuple, int size)
-        {
-            return DenseVector.OfEnumerable(tuple.SubVector(2 * size, size));
+            return DenseVector.OfEnumerable(tuple.SubVector(index, size));
         }
     }
 }
