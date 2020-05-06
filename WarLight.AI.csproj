@@ -112,6 +112,7 @@
     <Compile Include="OptiProd\MakeOrders\MultiAttackExpand.cs" />
     <Compile Include="OptiProd\MakeOrders\MultiAttackPathToBonus.cs" />
     <Compile Include="OptiProd\MakeOrders\MultiAttackPlan.cs" />
+    <Compile Include="OptiProd\MakeOrders\Optimizer.cs" />
     <Compile Include="OptiProd\MakeOrders\OrdersManager.cs" />
     <Compile Include="OptiProd\MakeOrders\PlayCards.cs" />
     <Compile Include="OptiProd\MakeOrders\PossibleAttack.cs" />
@@ -122,6 +123,8 @@
     <Compile Include="OptiProd\MakePicks\PickByWeight.cs" />
     <Compile Include="OptiProd\MakePicks\PickCluster.cs" />
     <Compile Include="OptiProd\MakePicks\PickTerritories.cs" />
+    <Compile Include="OptiProd\Modeling\MapModels.cs" />
+    <Compile Include="OptiProd\Modeling\Parser.cs" />
     <Compile Include="OptiProd\Neighbor.cs" />
     <Compile Include="Prod\BonusPath.cs" />
     <Compile Include="Prod\BotMain.cs" />
@@ -148,9 +151,6 @@
     <Compile Include="Prod\MakeOrders\ResolveTeamBonuses.cs" />
     <Compile Include="Prod\MakeOrders\UtilizeSpareArmies.cs" />
     <Compile Include="Prod\CaptureTerritories.cs" />
-    <Compile Include="Snowbird\BotMain.cs" />
-    <Compile Include="Snowbird\MapModels.cs" />
-    <Compile Include="Snowbird\Parser.cs" />
     <Compile Include="Wunderwaffe\BasicAlgorithms\DistanceCalculator.cs" />
     <Compile Include="Wunderwaffe\Bot\BotBonus.cs" />
     <Compile Include="Common\AIGamesParser.cs" />

@@ -8,9 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using WarLight.Shared.AI.Common.Util;
 
-namespace WarLight.Shared.AI.Snowbird
+namespace WarLight.Shared.AI.OptiProd.Modeling
 {
-    public static class Parser
+    public class Parser
     {
         /*
          * *************************

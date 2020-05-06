@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WarLight.Shared.AI.Snowbird
+namespace WarLight.Shared.AI.OptiProd.Modeling
 {
     public class MapModels
     {
+
         public MapIDType MapID;
 
         /*
@@ -49,6 +50,14 @@ namespace WarLight.Shared.AI.Snowbird
         private List<Dictionary<TerritoryIDType, List<double>>> StandingArmyMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnVariance;
         private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> StandingArmiesPerTurnCovariances;
+
+        /*
+         * Reward function vectors. 
+         */
+        private List<Dictionary<TerritoryIDType, double>> RewardMeansPerTurn;
+        private List<Dictionary<TerritoryIDType, List<double>>> RewardMeansComprehensiveDataPerTurn;
+        private List<Dictionary<TerritoryIDType, double>> RewardVariancesPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> RewardCovariancesPerTurn;
 
         public MapModels(MapIDType mapID)
         {
@@ -161,7 +170,7 @@ namespace WarLight.Shared.AI.Snowbird
             return this.DefenseDeploymentCovariancesPerTurn[turn]
                 .Select(
                     kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
-                        kvp.Key, 
+                        kvp.Key,
                         kvp.Value.Where(pvk => territories.Contains(pvk.Key))))
                 .Where(kvp => territories.Contains(kvp.Key))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(pvk => pvk.Key, pvk => pvk.Value));
@@ -231,6 +240,42 @@ namespace WarLight.Shared.AI.Snowbird
             this.SetStandingArmiesCovariances();
             var turn = turnNumber >= this.StandingArmiesPerTurnCovariances.Count ? this.StandingArmiesPerTurnCovariances.Count - 1 : turnNumber; // heuristic
             return this.StandingArmiesPerTurnCovariances[turn]
+                .Select(
+                    kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
+                        kvp.Key,
+                        kvp.Value.Where(pvk => territories.Contains(pvk.Key))))
+                .Where(kvp => territories.Contains(kvp.Key))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(pvk => pvk.Key, pvk => pvk.Value));
+        }
+
+        /*
+         * *********************
+         * Reward Methods
+         * *********************
+         */
+        public Dictionary<TerritoryIDType, double> GetRewardMeans(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        {
+            //this.SetStandingArmiesMeans();
+            var turn = turnNumber >= this.RewardMeansPerTurn.Count ? this.RewardMeansPerTurn.Count - 1 : turnNumber; // heuristic
+            return this.RewardMeansPerTurn[turn]
+                .Where(kvp => territories.Contains(kvp.Key))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        public Dictionary<TerritoryIDType, double> GetRewardVariances(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        {
+            //this.SetStandingArmiesVariances();
+            var turn = turnNumber >= this.RewardVariancesPerTurn.Count ? this.RewardVariancesPerTurn.Count - 1 : turnNumber; // heuristic
+            return this.RewardVariancesPerTurn[turn]
+                .Where(kvp => territories.Contains(kvp.Key))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetRewardCorrelations(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        {
+            //this.SetStandingArmiesCovariances();
+            var turn = turnNumber >= this.RewardCovariancesPerTurn.Count ? this.RewardCovariancesPerTurn.Count - 1 : turnNumber; // heuristic
+            return this.RewardCovariancesPerTurn[turn]
                 .Select(
                     kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
                         kvp.Key,
@@ -713,6 +758,45 @@ namespace WarLight.Shared.AI.Snowbird
                         }
                     }
                 }
+            }
+        }
+
+        private void SetRewardMeans()
+        {
+            // unlike other methods in this class, we create this statistic from dat on our hands
+            if (this.RewardMeansPerTurn == null)
+            {
+                this.SetDefensePowerMeansComprehensiveData();
+                this.DefensePowerMeansPerTurn = this.DefensePowerMeansComprehensiveDataPerTurn
+                    .Select(dict => dict
+                        .Select(kvp => new KeyValuePair<TerritoryIDType, double>(
+                            kvp.Key,
+                            kvp.Value.Average()))
+                        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value))
+                    .ToList();
+            }
+        }
+
+        private void SetRewardMeansComprehensive()
+        {
+            if (this.RewardMeansComprehensiveDataPerTurn == null)
+            {
+
+            }
+        }
+
+
+        private void SetRewardVariances()
+        {
+            if (this.RewardVariancesPerTurn == null)
+            {
+            }
+        }
+
+        private void SetRewardCorrelations()
+        {
+            if (this.RewardCovariancesPerTurn == null)
+            {
             }
         }
     }

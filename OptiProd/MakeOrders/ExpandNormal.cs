@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using WarLight.Shared.AI.Common.Util;
 
-namespace WarLight.Shared.AI.Prod2.MakeOrders
+namespace WarLight.Shared.AI.OptiProd.MakeOrders
 {
     public class ExpandNormal : Expand
     {

@@ -1,177 +1,65 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
+using System.Threading.Tasks;
+using WarLight.Shared.AI.OptiProd.Modeling;
 
-namespace WarLight.Shared.AI.Snowbird
+namespace WarLight.Shared.AI.OptiProd.MakeOrders
 {
-    public class BotMain : IWarLightAI
+    public class Optimizer
     {
-        /// <inheritdoc/>
-        public string Name() => "The Snowbird AI.";
-
-        /// <inheritdoc/>
-        public string Description() => "A Warzone bot that uses quadratic programming optimizatin algorithms to determine moves.";
-
-        /// <inheritdoc/>
-        public bool SupportsSettings(GameSettings settings, out string whyNot)
-        {
-            /*
-             * I need to update the whyNot string with all the reasons why this
-             * AI cannot support various settings. As this project is for class,
-             * I only care about playing turns in fairly vanilla game settings.
-             * 
-             * If this project grows into something more, I can add support for more
-             * settings later.
-             * 
-             * Alternatively, I can defer simply use the other bots implementations
-             * in those cases.
-             */
-            whyNot = null;
-            return true;
-        }
-
-        /// <inheritdoc/>
-        public bool RecommendsSettings(GameSettings settings, out string whyNot)
-        {
-            var sb = new StringBuilder();
-
-            /*
-             * I need to amend these recommendations.
-             */
-            if (settings.NoSplit)
-                sb.AppendLine("This bot does not understand no-split mode and will issue attacks as if no-split mode was disabled.");
-            if (settings.Cards.ContainsKey(CardType.OrderPriority.CardID))
-                sb.AppendLine("This bot does not understand how to play Order Priority cards.");
-            if (settings.Cards.ContainsKey(CardType.OrderDelay.CardID))
-                sb.AppendLine("This bot does not understand how to play Order Delay cards.");
-            if (settings.Cards.ContainsKey(CardType.Airlift.CardID))
-                sb.AppendLine("This bot does not understand how to play Airlift cards.");
-            if (settings.Cards.ContainsKey(CardType.Gift.CardID))
-                sb.AppendLine("This bot does not understand how to play Gift cards.");
-            if (settings.Cards.ContainsKey(CardType.Reconnaissance.CardID))
-                sb.AppendLine("This bot does not understand how to play Reconnaissance cards.");
-            if (settings.Cards.ContainsKey(CardType.Spy.CardID))
-                sb.AppendLine("This bot does not understand how to play Spy cards.");
-            if (settings.Cards.ContainsKey(CardType.Surveillance.CardID))
-                sb.AppendLine("This bot does not understand how to play Surveillance cards.");
-
-            whyNot = sb.ToString();
-            return whyNot.Length == 0;
-        }
-
-        public GameStanding DistributionStandingOpt;
-        public GameStanding Standing;
-        public PlayerIDType PlayerID;
-        public Dictionary<PlayerIDType, GamePlayer> Players;
-
-        public MapDetails Map;
-        public GameSettings Settings;
-        public Dictionary<PlayerIDType, TeammateOrders> TeammatesOrders;
-        public List<CardInstance> Cards;
-        public int CardsMustPlay;
-        public Dictionary<PlayerIDType, PlayerIncome> Incomes;
-
-        public PlayerIncome BaseIncome;
-        public PlayerIncome EffectiveIncome;
-
-        public List<GamePlayer> Opponents;
-        public bool IsFFA; //if false, we're in a 1v1, 2v2, 3v3, etc.  If false, there are more than two entities still alive in the game.  A game can change from FFA to non-FFA as players are eliminated.
-        //public Dictionary<PlayerIDType, Neighbor> Neighbors;
-        public Dictionary<PlayerIDType, int> WeightedNeighbors;
-        public HashSet<TerritoryIDType> AvoidTerritories = new HashSet<TerritoryIDType>(); //we're conducting some sort of operation here, such as a a blockade, so avoid attacking or deploying more here.
-        private Stopwatch Timer;
-        public List<string> Directives;
         private MapModels MapModel;
-        private Dictionary<TerritoryIDType, double> StandingArmiesMean;
-        private Dictionary<TerritoryIDType, double> StandingArmiesVariance;
-        private Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> StandingArmiesCovariances;
+        private MapDetails Map;
 
-        /// <inheritdoc/>
-        public void Init(GameIDType gameID, PlayerIDType myPlayerID, Dictionary<PlayerIDType, GamePlayer> players, MapDetails map, 
-            GameStanding distributionStanding, GameSettings gameSettings, int numberOfTurns, Dictionary<PlayerIDType, 
-            PlayerIncome> incomes, GameOrder[] prevTurn, GameStanding latestTurnStanding, GameStanding previousTurnStanding, 
-            Dictionary<PlayerIDType, TeammateOrders> teammatesOrders, List<CardInstance> cards, int cardsMustPlay, Stopwatch timer, List<string> directives)
+        public Optimizer(MapDetails map)
         {
-            this.DistributionStandingOpt = distributionStanding;
-            this.Standing = latestTurnStanding;
-            this.PlayerID = myPlayerID;
-            this.Players = players;
             this.Map = map;
-            this.Settings = gameSettings;
-            this.TeammatesOrders = teammatesOrders;
-            this.Cards = cards;
-            this.CardsMustPlay = cardsMustPlay;
-            this.Incomes = incomes;
-            this.BaseIncome = Incomes[PlayerID];
-            this.EffectiveIncome = this.BaseIncome.Clone();
-            //this.Neighbors = players.Keys.ExceptOne(PlayerID).ConcatOne(TerritoryStanding.NeutralPlayerID).ToDictionary(o => o, o => new Neighbor(this, o));
-            //this.Opponents = players.Values.Where(o => o.State == GamePlayerState.Playing && !IsTeammateOrUs(o.ID)).ToList();
-            this.IsFFA = true; // Opponents.Count > 1 && (Opponents.Any(o => o.Team == PlayerInvite.NoTeam) || Opponents.GroupBy(o => o.Team).Count() > 1);
-            //this.WeightedNeighbors = WeightNeighbors();
-            this.Timer = timer;
-            this.Directives = directives;
-
-            AILog.Log("BotMain", "Snowbird initialized.  Starting at " + timer.Elapsed.TotalSeconds + " seconds");
+            this.MapModel = new MapModels(map.ID);
         }
 
-        public List<TerritoryIDType> GetPicks()
+        public Dictionary<TerritoryIDType, double> OptimizeTurn(IEnumerable<TerritoryIDType> territories, int turnNumber)
         {
-            return new List<TerritoryIDType>();
-        }
+            var attackPowerMeans = this.MapModel.GetAttackPowerMeans(territories, turnNumber);
+            var attackPowerCovariances = this.MapModel.GetAttackPowerCovariances(territories, turnNumber);
+            var defensePowerMeans = this.MapModel.GetDefensePowerMeans(territories, turnNumber);
+            var defensePowerCovariancs = this.MapModel.GetDefensePowerCovariances(territories, turnNumber);
 
-        public List<GameOrder> GetOrders()
-        {
-            /*var myTerritories = this.Standing.Territories.Values.Where((o) => o.OwnerPlayerID == this.PlayerID);
-            var myIDs = myTerritories.Select(o => o.ID);
-            var myDetails = myTerritories.Select((o) => this.Map.Territories[o.ID]);
-            var possibleExpansions = myDetails.Select(o => o.ConnectedTo.Keys.Where(s => !myIDs.Contains(s)));
-            var rewards = possibleExpansions..Select(o => o.Sum(s => this.Map.Territories[s].PartOfBonuses.Sum(t => this.Map.Bonuses[t].Amount)));*/
-            return new List<GameOrder>();
-        }
+            var apm = DenseVector.OfEnumerable(attackPowerMeans.Values);
+            var apc = DenseMatrix.OfRowArrays(attackPowerCovariances.Values
+                .Select(d => d.Values.ToArray())
+                .ToArray());
+            var dpm = DenseVector.OfEnumerable(defensePowerMeans.Values);
+            var dpc = DenseMatrix.OfRowArrays(defensePowerCovariancs.Values
+                .Select(d => d.Values.ToArray())
+                .ToArray());
 
-        public void TestParser()
-        {
-            // Test parser
-            this.MapModel = new MapModels((MapIDType) 2);
-            var territories = new List<TerritoryIDType>(new TerritoryIDType[] { (TerritoryIDType)1, (TerritoryIDType)5, (TerritoryIDType)8 });
-            this.StandingArmiesMean = this.MapModel.GetAttackPowerMeans(territories, 10);
-            this.StandingArmiesVariance = this.MapModel.GetAttackPowerVariances(territories, 10);
-            this.StandingArmiesCovariances = this.MapModel.GetAttackPowerCovariances(territories, 10);
+            // collect relevant board information
+            var bonuses = DenseVector.OfEnumerable(territories
+                .Select(id => this.Map.Territories[id].PartOfBonuses
+                    .Select(bonus => (double)this.Map.Bonuses[bonus].Amount)
+                    .Sum()));
 
             // define the mean vector
-            Vector<double> mu = DenseVector.OfArray(this.StandingArmiesMean.Values.ToArray());
-
-            // define the covariance matrix
-            var corrBase = this.StandingArmiesCovariances.Select(kvp => kvp.Value.Select(pvk => pvk.Value).ToArray()).ToArray();
-            var gBase = new double[corrBase.Length, corrBase.Length];
-            for (var i = 0; i < corrBase.Length; i++)
-            {
-                var iSig = this.StandingArmiesVariance[territories[i]];
-                for (var j = 0; j < corrBase.Length; j++)
-                {
-                    var jSig = this.StandingArmiesVariance[territories[j]];
-                    gBase[i, j] = corrBase[i][j] * iSig * jSig;
-                }
-            }
-            Matrix<double> G = DenseMatrix.OfArray(gBase);
+            var mu = bonuses - dpm.Multiply(10 / 7) - apm.Multiply(10 / 6); // add vectors for constants like troops at location, bonuses, etc.
+            var G = apc - dpc; // incorrect, I need to calculate these quantities.
 
             // develop (equality-constraint) matrix A
             // For starters, we simply care that the vector sums to 1 (not explicitly worrying about positivity).
             var aBase = new double[G.RowCount + 1, G.RowCount];
             for (var i = 0; i < G.RowCount; i++)
             {
-                for (var j = 0; j < G.RowCount; j++) {
+                for (var j = 0; j < G.RowCount; j++)
+                {
                     if (i == 0)
                     {
                         aBase[0, j] = 1;
                     }
                     else
                     {
-                        if (j == i-1)
+                        if (j == i - 1)
                         {
                             aBase[i, j] = 1;
                         }
@@ -187,7 +75,7 @@ namespace WarLight.Shared.AI.Snowbird
             // define the solution vector
             var bBase = new double[A.RowCount];
             bBase[0] = 1;
-            for (var i = 1;  i < A.RowCount; i++)
+            for (var i = 1; i < A.RowCount; i++)
             {
                 bBase[i] = 0;
             }
@@ -195,10 +83,9 @@ namespace WarLight.Shared.AI.Snowbird
 
             // generate a random non-singular matrix for testing
             var deploymentDistribution = this.ComputeOptimalDistribution(A, b, mu, G);
-            var dict = deploymentDistribution.Zip(territories, (dist, terr) => new KeyValuePair<TerritoryIDType, double>(terr, dist)).ToDictionary(pair => pair.Key);
-
-            // Convert the distribution to integer orders
-            // submit orders.
+            return deploymentDistribution
+                .Zip(territories, (dist, terr) => new KeyValuePair<TerritoryIDType, double>(terr, dist))
+                .ToDictionary(pair => pair.Key, pair => pair.Value);
         }
 
         private Vector<double> ComputeOptimalDistribution(Matrix<double> A, Vector<double> b, Vector<double> mu, Matrix<double> G)
@@ -221,7 +108,7 @@ namespace WarLight.Shared.AI.Snowbird
                     yBarBase[0] = 0;
                     lamBarBase[0] = 0;
                 }
-                else if(i == 1)
+                else if (i == 1)
                 {
                     xBarBase[1] = 0;
                     yBarBase[1] = 1;
@@ -314,17 +201,17 @@ namespace WarLight.Shared.AI.Snowbird
         }
 
         private Vector<double> GetScalingSteps(
-            Matrix<double> A, 
-            Matrix<double> G, 
-            Matrix<double> Lambda, 
-            Matrix<double> Y, 
-            Vector<double> rd, 
+            Matrix<double> A,
+            Matrix<double> G,
+            Matrix<double> Lambda,
+            Matrix<double> Y,
+            Vector<double> rd,
             Vector<double> rp,
-            double mu, 
+            double mu,
             double sigma)
         {
             Vector<double> e = CreateVector.Dense(Y.RowCount, 1.0); // quick creation of the all 1 vector
-            
+
             // Create the system of equations to solve using Newton's method
             // TODO: Use the CreateMatrix.DenseOfMatrixArray(...) function for the below purpose
             var cols = G.ColumnCount + Lambda.ColumnCount + Y.ColumnCount;
@@ -412,11 +299,11 @@ namespace WarLight.Shared.AI.Snowbird
         private double LineSearch(
             Func<double, double> daf,
             Func<double, double> ddaf,
-            double alphaStart, 
-            double lowerBound, 
+            double alphaStart,
+            double lowerBound,
             bool isLowerBoundInclusive,
-            double upperBound, 
-            bool isUpperBoundInclusive, 
+            double upperBound,
+            bool isUpperBoundInclusive,
             double tol)
         {
             // f in this context is the 2-norm of the gradient and we want to drive it to 0 to find the min of the negative of the composite vector
@@ -481,7 +368,7 @@ namespace WarLight.Shared.AI.Snowbird
         private Matrix<double> dx1Norm(Matrix<double> A, Vector<double> b, Vector<double> x)
         {
             var a = A.Determinant();
-            if (a== 0)
+            if (a == 0)
             {
                 // consider throwing an error
             }

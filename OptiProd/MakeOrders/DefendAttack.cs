@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using WarLight.Shared.AI.Common.Util;
+using WarLight.Shared.AI.OptiProd.Modeling;
 
-namespace WarLight.Shared.AI.Prod2.MakeOrders
+namespace WarLight.Shared.AI.OptiProd.MakeOrders
 {
     public class DefendAttack
     {
@@ -32,15 +34,15 @@ namespace WarLight.Shared.AI.Prod2.MakeOrders
             int armiesToOffense = SharedUtility.Round(incomeToUse * offenseRatio);
             int armiesToDefense = incomeToUse - armiesToOffense;
 
-            AILog.Log("DefendAttack", "offenseRatio=" + offenseRatio + ": " + armiesToOffense + " armies go to offense, " + armiesToDefense + " armies go to defense");
+            // AILog.Log("DefendAttack", "offenseRatio=" + offenseRatio + ": " + armiesToOffense + " armies go to offense, " + armiesToDefense + " armies go to defense");
 
             //Find defensive opportunities.
             var orderedDefenses = WeightedMoves.OrderByDescending(o => o.DefenseImportance).ToList();
             var orderedAttacks = WeightedMoves.OrderByDescending(o => o.OffenseImportance).ToList();
 
 
-            DoDefense(armiesToDefense, orderedDefenses);
-            DoOffense(armiesToOffense, orderedAttacks);
+            DoDefense(incomeToUse, orderedDefenses);
+            DoOffense(incomeToUse, orderedAttacks);
 
         }
 
@@ -206,11 +208,29 @@ namespace WarLight.Shared.AI.Prod2.MakeOrders
              * employ an optimization method to method to weight the territories.
              * Then, the list of weights will determine how many troops to deploy.
              */
+            var territoriesToAttack = ret.Select(pos => pos.To);
+            var dist = this.Bot.Optimizer.OptimizeTurn(territoriesToAttack, DataCollector.currentTurnNumber);
 
-            foreach (PossibleAttack a in ret)
-                a.Weight(Bot.WeightedNeighbors);
+            foreach (var kvp in dist)
+            {
+                foreach (var a in ret.Where(o => o.To == kvp.Key))
+                {
+                    if (kvp.Value >= 0)
+                    {
+                        // Attack the position
+                        a.OffenseImportance = kvp.Value;
+                        a.DefenseImportance = 0;
+                    }
+                    else
+                    {
+                        // otherwise, defend it
+                        a.OffenseImportance = 0;
+                        a.DefenseImportance = -1 * kvp.Value;
+                    }
+                }
+            }
 
-            NormalizeWeights(ret);
+            /*NormalizeWeights(ret);*/
 
             return ret;
         }

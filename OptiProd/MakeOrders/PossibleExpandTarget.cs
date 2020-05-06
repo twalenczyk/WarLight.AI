@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace WarLight.Shared.AI.Prod2.MakeOrders
+namespace WarLight.Shared.AI.OptiProd.MakeOrders
 {
     public class PossibleExpandTarget
     {

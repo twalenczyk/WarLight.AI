@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace WarLight.Shared.AI.Prod2.MakePicks
+namespace WarLight.Shared.AI.OptiProd.MakePicks
 {
     static class PickCluster
     {

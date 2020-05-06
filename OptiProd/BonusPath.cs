@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace WarLight.Shared.AI.Prod2
+namespace WarLight.Shared.AI.OptiProd
 {
     /// <summary>
     /// Calculates the path to take the bonus in the fewest number of turns, ignoring armies.

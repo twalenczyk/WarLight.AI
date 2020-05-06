@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using WarLight.Shared.AI.OptiProd.MakeOrders;
 
-namespace WarLight.Shared.AI.Prod2
+namespace WarLight.Shared.AI.OptiProd
 {
     public class BotMain : IWarLightAI
     {
@@ -15,12 +16,12 @@ namespace WarLight.Shared.AI.Prod2
 
         public string Name()
         {
-            return "Prod 2.0" + (UseRandomness ? " with randomness" : "");
+            return "Snowbird Version 0.1";
         }
 
         public string Description()
         {
-            return "Version 2.0 of Warzone's production AI." + (UseRandomness ? " This bot allows randomness to influence its actions to keep it from being predictable.  This is the same AI that powers AIs in multi-player games, as well as custom single-player levels." : "");
+            return "Version 0.1 of Snowbird Bot. This AI uses quadratic programming to weight possible attacks.";
         }
 
         public bool SupportsSettings(GameSettings settings, out string whyNot)
@@ -52,7 +53,6 @@ namespace WarLight.Shared.AI.Prod2
             whyNot = sb.ToString();
             return whyNot.Length == 0;
         }
-
         public bool UseRandomness;
 
         public GameStanding DistributionStandingOpt;
@@ -77,6 +77,8 @@ namespace WarLight.Shared.AI.Prod2
         public HashSet<TerritoryIDType> AvoidTerritories = new HashSet<TerritoryIDType>(); //we're conducting some sort of operation here, such as a a blockade, so avoid attacking or deploying more here.
         private Stopwatch Timer;
         public List<string> Directives;
+
+        public Optimizer Optimizer;
 
         public bool PastTime(double seconds)
         {
@@ -112,6 +114,7 @@ namespace WarLight.Shared.AI.Prod2
             this.WeightedNeighbors = WeightNeighbors();
             this.Timer = timer;
             this.Directives = directives;
+            this.Optimizer = new Optimizer(map);
             AILog.Log("BotMain", "Prod initialized.  Starting at " + timer.Elapsed.TotalSeconds + " seconds");
         }
 
