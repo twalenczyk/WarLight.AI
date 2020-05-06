@@ -16,7 +16,7 @@ namespace WarLight.Shared.AI.Snowbird
         private List<Dictionary<TerritoryIDType, double>> AttackDeploymentMeansPerTurn;
         private List<Dictionary<TerritoryIDType, List<double>>> AttackDeploymentMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> AttackDeploymentVariancesPerTurn;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackDeploymentCorrelationsPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackDeploymentCovariancesPerTurn;
 
         /*
          * Attack power vectors.
@@ -24,7 +24,7 @@ namespace WarLight.Shared.AI.Snowbird
         private List<Dictionary<TerritoryIDType, double>> AttackPowerMeansPerTurn;
         private List<Dictionary<TerritoryIDType, List<double>>> AttackPowerMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> AttackPowerVariancesPerTurn;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackPowerCorrelationsPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> AttackPowerCovariancesPerTurn;
 
         /*
          * Defense deployment vectors.
@@ -32,7 +32,7 @@ namespace WarLight.Shared.AI.Snowbird
         private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentMeansPerTurn;
         private List<Dictionary<TerritoryIDType, List<double>>> DefenseDeploymentMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> DefenseDeploymentVariancesPerTurn;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefenseDeploymentCorrelationsPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefenseDeploymentCovariancesPerTurn;
 
         /*
          * Defemse power vectors.
@@ -40,7 +40,7 @@ namespace WarLight.Shared.AI.Snowbird
         private List<Dictionary<TerritoryIDType, double>> DefensePowerMeansPerTurn;
         private List<Dictionary<TerritoryIDType, List<double>>> DefensePowerMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> DefensePowerVariancesPerTurn;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefensePowerCorrelationsPerTurn;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> DefensePowerCovariancesPerTurn;
 
         /*
          * Standing army vectors.
@@ -48,7 +48,7 @@ namespace WarLight.Shared.AI.Snowbird
         private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnMean;
         private List<Dictionary<TerritoryIDType, List<double>>> StandingArmyMeansComprehensiveDataPerTurn;
         private List<Dictionary<TerritoryIDType, double>> StandingArmiesPerTurnVariance;
-        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> StandingArmiesPerTurnCorrelations;
+        private List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>> StandingArmiesPerTurnCovariances;
 
         public MapModels(MapIDType mapID)
         {
@@ -83,11 +83,11 @@ namespace WarLight.Shared.AI.Snowbird
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetAttackDeploymentCorrelations(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetAttackDeploymentCovariances(IEnumerable<TerritoryIDType> territories, int turnNumber)
         {
-            this.SetAttackDeploymentCorrelations();
-            var turn = turnNumber >= this.AttackDeploymentCorrelationsPerTurn.Count ? this.AttackDeploymentCorrelationsPerTurn.Count - 1 : turnNumber; // heuristic
-            return this.AttackDeploymentCorrelationsPerTurn[turn]
+            this.SetAttackDeploymentCovariances();
+            var turn = turnNumber >= this.AttackDeploymentCovariancesPerTurn.Count ? this.AttackDeploymentCovariancesPerTurn.Count - 1 : turnNumber; // heuristic
+            return this.AttackDeploymentCovariancesPerTurn[turn]
                 .Select(
                     kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
                         kvp.Key,
@@ -119,11 +119,11 @@ namespace WarLight.Shared.AI.Snowbird
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetAttackPowerCorrelations(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetAttackPowerCovariances(IEnumerable<TerritoryIDType> territories, int turnNumber)
         {
-            this.SetAttackPowerCorrelations();
+            this.SetAttackPowerCovariances();
             var turn = turnNumber >= this.AttackPowerMeansPerTurn.Count ? this.AttackPowerMeansPerTurn.Count - 1 : turnNumber; // heuristic
-            return this.AttackPowerCorrelationsPerTurn[turn]
+            return this.AttackPowerCovariancesPerTurn[turn]
                 .Select(
                     kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
                         kvp.Key,
@@ -154,11 +154,11 @@ namespace WarLight.Shared.AI.Snowbird
                 .Where(kvp => territories.Contains(kvp.Key))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
-        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetDefenseDeploymentsCorrelations(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetDefenseDeploymentsCovariances(IEnumerable<TerritoryIDType> territories, int turnNumber)
         {
-            this.SetDefenseDeploymentCorrelations();
-            var turn = turnNumber >= this.DefenseDeploymentCorrelationsPerTurn.Count ? this.DefenseDeploymentCorrelationsPerTurn.Count - 1 : turnNumber; // heuristic
-            return this.DefenseDeploymentCorrelationsPerTurn[turn]
+            this.SetDefenseDeploymentCovariances();
+            var turn = turnNumber >= this.DefenseDeploymentCovariancesPerTurn.Count ? this.DefenseDeploymentCovariancesPerTurn.Count - 1 : turnNumber; // heuristic
+            return this.DefenseDeploymentCovariancesPerTurn[turn]
                 .Select(
                     kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
                         kvp.Key, 
@@ -190,11 +190,11 @@ namespace WarLight.Shared.AI.Snowbird
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetDefensePowerCorrelations(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetDefensePowerCovariances(IEnumerable<TerritoryIDType> territories, int turnNumber)
         {
-            this.SetDefensePowerCorrelations();
+            this.SetDefensePowerCovariances();
             var turn = turnNumber >= this.AttackPowerMeansPerTurn.Count ? this.AttackPowerMeansPerTurn.Count - 1 : turnNumber; // heuristic
-            return this.DefensePowerCorrelationsPerTurn[turn]
+            return this.DefensePowerCovariancesPerTurn[turn]
                 .Select(
                     kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
                         kvp.Key,
@@ -226,11 +226,11 @@ namespace WarLight.Shared.AI.Snowbird
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetStandingArmyCorrelations(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        public Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> GetStandingArmyCovariances(IEnumerable<TerritoryIDType> territories, int turnNumber)
         {
-            this.SetStandingArmiesCorrelations();
-            var turn = turnNumber >= this.StandingArmiesPerTurnCorrelations.Count ? this.StandingArmiesPerTurnCorrelations.Count - 1 : turnNumber; // heuristic
-            return this.StandingArmiesPerTurnCorrelations[turn]
+            this.SetStandingArmiesCovariances();
+            var turn = turnNumber >= this.StandingArmiesPerTurnCovariances.Count ? this.StandingArmiesPerTurnCovariances.Count - 1 : turnNumber; // heuristic
+            return this.StandingArmiesPerTurnCovariances[turn]
                 .Select(
                     kvp => new KeyValuePair<TerritoryIDType, IEnumerable<KeyValuePair<TerritoryIDType, double>>>(
                         kvp.Key,
@@ -282,19 +282,19 @@ namespace WarLight.Shared.AI.Snowbird
             }
         }
 
-        private void SetAttackDeploymentCorrelations()
+        private void SetAttackDeploymentCovariances()
         {
-            if (this.AttackDeploymentCorrelationsPerTurn == null)
+            if (this.AttackDeploymentCovariancesPerTurn == null)
             {
                 // initialize the matrix
                 this.SetAttackDeploymentMeans();
                 this.SetAttackDeploymentMeansComprehensiveData();
                 this.SetAttackDeploymentVariances();
 
-                this.AttackDeploymentCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.AttackDeploymentCovariancesPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
                 for (var index = 0; index < this.AttackDeploymentMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    this.AttackDeploymentCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.AttackDeploymentCovariancesPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.AttackDeploymentMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -303,7 +303,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.AttackDeploymentMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        this.AttackDeploymentCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.AttackDeploymentCovariancesPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -312,7 +312,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
                             var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
-                            this.AttackDeploymentCorrelationsPerTurn[index][i][j] = ijCorrMean;
+                            this.AttackDeploymentCovariancesPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -398,9 +398,9 @@ namespace WarLight.Shared.AI.Snowbird
             }
         }
 
-        private void SetAttackPowerCorrelations()
+        private void SetAttackPowerCovariances()
         {
-            if (this.AttackPowerCorrelationsPerTurn == null)
+            if (this.AttackPowerCovariancesPerTurn == null)
             {
                 // initialize the matrix
                 this.SetAttackPowerMeans();
@@ -408,12 +408,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetAttackPowerVariances();
 
                 // considering caching to improve performance
-                this.AttackPowerCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.AttackPowerCovariancesPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.AttackPowerMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    this.AttackPowerCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.AttackPowerCovariancesPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.AttackPowerMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -423,7 +423,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.AttackPowerMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        this.AttackPowerCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.AttackPowerCovariancesPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -432,7 +432,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
                             var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
-                            this.AttackPowerCorrelationsPerTurn[index][i][j] = ijCorrMean;
+                            this.AttackPowerCovariancesPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -477,9 +477,9 @@ namespace WarLight.Shared.AI.Snowbird
             }
         }
 
-        private void SetDefenseDeploymentCorrelations()
+        private void SetDefenseDeploymentCovariances()
         {
-            if (this.DefenseDeploymentCorrelationsPerTurn == null)
+            if (this.DefenseDeploymentCovariancesPerTurn == null)
             {
                 // initialize the matrix
                 this.SetDefenseDeploymentMeans();
@@ -487,12 +487,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetDefenseDeploymentVariances();
 
                 // considering caching to improve performance
-                this.DefenseDeploymentCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.DefenseDeploymentCovariancesPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.DefenseDeploymentMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    this.DefenseDeploymentCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.DefenseDeploymentCovariancesPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.DefenseDeploymentMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -501,7 +501,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.DefenseDeploymentMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        this.DefenseDeploymentCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.DefenseDeploymentCovariancesPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -510,7 +510,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
                             var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
-                            this.DefenseDeploymentCorrelationsPerTurn[index][i][j] = ijCorrMean;
+                            this.DefenseDeploymentCovariancesPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -598,9 +598,9 @@ namespace WarLight.Shared.AI.Snowbird
             }
         }
 
-        private void SetDefensePowerCorrelations()
+        private void SetDefensePowerCovariances()
         {
-            if (this.DefensePowerCorrelationsPerTurn == null)
+            if (this.DefensePowerCovariancesPerTurn == null)
             {
                 // initialize the matrix
                 this.SetDefensePowerMeans();
@@ -608,12 +608,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetDefensePowerVariances();
 
                 // considering caching to improve performance
-                this.DefensePowerCorrelationsPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.DefensePowerCovariancesPerTurn = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.DefensePowerMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    this.DefensePowerCorrelationsPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.DefensePowerCovariancesPerTurn.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     var armyData = this.DefensePowerMeansComprehensiveDataPerTurn[index];
 
                     // per turn, calculate the expected value of the correlation
@@ -622,7 +622,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.DefensePowerMeansPerTurn[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        this.DefensePowerCorrelationsPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
+                        this.DefensePowerCovariancesPerTurn[index][i] = new Dictionary<TerritoryIDType, double>();
 
                         foreach (var jkvp in armyData)
                         {
@@ -631,7 +631,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
                             var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
-                            this.DefensePowerCorrelationsPerTurn[index][i][j] = ijCorrMean;
+                            this.DefensePowerCovariancesPerTurn[index][i][j] = ijCorrMean;
                         }
                     }
                 }
@@ -677,9 +677,9 @@ namespace WarLight.Shared.AI.Snowbird
             }
         }
 
-        private void SetStandingArmiesCorrelations()
+        private void SetStandingArmiesCovariances()
         {
-            if (this.StandingArmiesPerTurnCorrelations == null)
+            if (this.StandingArmiesPerTurnCovariances == null)
             {
                 // initialize the matrix
                 this.SetStandingArmiesMeans();
@@ -687,12 +687,12 @@ namespace WarLight.Shared.AI.Snowbird
                 this.SetStandingArmiesVariances();
 
                 // considering caching to improve performance
-                this.StandingArmiesPerTurnCorrelations = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
+                this.StandingArmiesPerTurnCovariances = new List<Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>>();
 
                 // set up the new random variable matrix
                 for (var index = 0; index < this.StandingArmyMeansComprehensiveDataPerTurn.Count; index++)
                 {
-                    this.StandingArmiesPerTurnCorrelations.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
+                    this.StandingArmiesPerTurnCovariances.Add(new Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>>());
                     // per turn, calculate the expected value of the correlation
                     var armyData = this.StandingArmyMeansComprehensiveDataPerTurn[index];
                     foreach (var ikvp in armyData)
@@ -700,7 +700,7 @@ namespace WarLight.Shared.AI.Snowbird
                         var i = ikvp.Key;
                         var iMean = this.StandingArmiesPerTurnMean[index][i];
                         var iVarianceVector = ikvp.Value.Select(entry => entry - iMean);
-                        this.StandingArmiesPerTurnCorrelations[index].Add(i, new Dictionary<TerritoryIDType, double>());
+                        this.StandingArmiesPerTurnCovariances[index].Add(i, new Dictionary<TerritoryIDType, double>());
 
                         foreach (var jkvp in armyData)
                         {
@@ -709,7 +709,7 @@ namespace WarLight.Shared.AI.Snowbird
                             var jVarianceVector = jkvp.Value.Select(entry => entry - jMean);
 
                             var ijCorrMean = iVarianceVector.Zip(jVarianceVector, (o, p) => o * p).Sum() / (iVarianceVector.Count() - 1);
-                            this.StandingArmiesPerTurnCorrelations[index][i][j] = ijCorrMean;
+                            this.StandingArmiesPerTurnCovariances[index][i][j] = ijCorrMean;
                         }
                     }
                 }

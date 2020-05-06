@@ -88,7 +88,7 @@ namespace WarLight.Shared.AI.Snowbird
         private MapModels MapModel;
         private Dictionary<TerritoryIDType, double> StandingArmiesMean;
         private Dictionary<TerritoryIDType, double> StandingArmiesVariance;
-        private Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> StandingArmiesCorrelations;
+        private Dictionary<TerritoryIDType, Dictionary<TerritoryIDType, double>> StandingArmiesCovariances;
 
         /// <inheritdoc/>
         public void Init(GameIDType gameID, PlayerIDType myPlayerID, Dictionary<PlayerIDType, GamePlayer> players, MapDetails map, 
@@ -140,13 +140,13 @@ namespace WarLight.Shared.AI.Snowbird
             var territories = new List<TerritoryIDType>(new TerritoryIDType[] { (TerritoryIDType)1, (TerritoryIDType)5, (TerritoryIDType)8 });
             this.StandingArmiesMean = this.MapModel.GetAttackPowerMeans(territories, 10);
             this.StandingArmiesVariance = this.MapModel.GetAttackPowerVariances(territories, 10);
-            this.StandingArmiesCorrelations = this.MapModel.GetAttackPowerCorrelations(territories, 10);
+            this.StandingArmiesCovariances = this.MapModel.GetAttackPowerCovariances(territories, 10);
 
             // define the mean vector
             Vector<double> mu = DenseVector.OfArray(this.StandingArmiesMean.Values.ToArray());
 
             // define the covariance matrix
-            var corrBase = this.StandingArmiesCorrelations.Select(kvp => kvp.Value.Select(pvk => pvk.Value).ToArray()).ToArray();
+            var corrBase = this.StandingArmiesCovariances.Select(kvp => kvp.Value.Select(pvk => pvk.Value).ToArray()).ToArray();
             var gBase = new double[corrBase.Length, corrBase.Length];
             for (var i = 0; i < corrBase.Length; i++)
             {
