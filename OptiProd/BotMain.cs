@@ -114,7 +114,7 @@ namespace WarLight.Shared.AI.OptiProd
             this.WeightedNeighbors = WeightNeighbors();
             this.Timer = timer;
             this.Directives = directives;
-            this.Optimizer = new Optimizer(map);
+            this.Optimizer = new Optimizer(map, numberOfTurns);
             AILog.Log("BotMain", "Prod initialized.  Starting at " + timer.Elapsed.TotalSeconds + " seconds");
         }
 

@@ -2,20 +2,145 @@
   "turnNumber": 0,
   "deployments": [
     {
+      "territoryID": 29,
+      "armies": [
+        3.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "territoryID": 2,
+      "armies": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 10,
+      "armies": [
+        2.0,
+        0.0
+      ]
+    },
+    {
+      "territoryID": 18,
+      "armies": [
+        0.0
+      ]
+    },
+    {
+      "territoryID": 24,
+      "armies": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "territoryID": 38,
+      "armies": [
+        2.0,
+        0.0
+      ]
+    },
+    {
+      "territoryID": 41,
+      "armies": [
+        3.0,
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "territoryID": 4,
+      "armies": [
+        0.0,
+        0.0,
+        2.0,
+        0.0,
+        3.0,
+        4.0,
+        3.0
+      ]
+    },
+    {
+      "territoryID": 42,
+      "armies": [
+        0.0
+      ]
+    },
+    {
+      "territoryID": 36,
+      "armies": [
+        0.0,
+        4.0
+      ]
+    },
+    {
       "territoryID": 5,
       "armies": [
+        0.0,
         3.0,
         3.0
       ]
     },
     {
-      "territoryID": 16,
+      "territoryID": 7,
       "armies": [
+        2.0,
+        0.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 15,
+      "armies": [
+        0.0,
+        1.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 28,
+      "armies": [
+        1.0
+      ]
+    },
+    {
+      "territoryID": 20,
+      "armies": [
+        1.0,
         3.0
       ]
     },
     {
+      "territoryID": 14,
+      "armies": [
+        0.0
+      ]
+    },
+    {
       "territoryID": 1,
+      "armies": [
+        0.0,
+        3.0
+      ]
+    },
+    {
+      "territoryID": 12,
+      "armies": [
+        1.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 34,
+      "armies": [
+        0.0
+      ]
+    },
+    {
+      "territoryID": 16,
       "armies": [
         3.0
       ]
@@ -28,24 +153,6 @@
     },
     {
       "territoryID": 11,
-      "armies": [
-        3.0
-      ]
-    },
-    {
-      "territoryID": 20,
-      "armies": [
-        3.0
-      ]
-    },
-    {
-      "territoryID": 4,
-      "armies": [
-        3.0
-      ]
-    },
-    {
-      "territoryID": 41,
       "armies": [
         3.0
       ]

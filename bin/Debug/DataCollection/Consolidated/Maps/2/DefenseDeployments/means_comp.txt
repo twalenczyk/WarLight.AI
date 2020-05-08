@@ -2,11 +2,153 @@
   "turnNumber": 0,
   "deployments": [
     {
-      "territoryID": 1,
+      "territoryID": 2,
+      "armies": [
+        1.0,
+        2.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 24,
       "armies": [
         1.0,
         2.0,
         1.0
+      ]
+    },
+    {
+      "territoryID": 25,
+      "armies": [
+        1.0
+      ]
+    },
+    {
+      "territoryID": 29,
+      "armies": [
+        1.0,
+        2.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 22,
+      "armies": [
+        1.0,
+        1.0,
+        1.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 41,
+      "armies": [
+        1.0,
+        1.0,
+        3.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 1,
+      "armies": [
+        1.0,
+        1.0,
+        2.0,
+        1.0,
+        2.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 10,
+      "armies": [
+        4.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 18,
+      "armies": [
+        2.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 17,
+      "armies": [
+        1.0
+      ]
+    },
+    {
+      "territoryID": 7,
+      "armies": [
+        1.0,
+        1.0,
+        2.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 4,
+      "armies": [
+        1.0,
+        2.0,
+        1.0,
+        2.0,
+        2.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 11,
+      "armies": [
+        1.0,
+        2.0
+      ]
+    },
+    {
+      "territoryID": 39,
+      "armies": [
+        1.0
+      ]
+    },
+    {
+      "territoryID": 36,
+      "armies": [
+        3.0,
+        2.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 5,
+      "armies": [
+        1.0,
+        2.0,
+        2.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 42,
+      "armies": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "territoryID": 15,
+      "armies": [
+        2.0
+      ]
+    },
+    {
+      "territoryID": 38,
+      "armies": [
+        4.0
       ]
     },
     {
@@ -15,7 +157,20 @@
         1.0,
         1.0,
         1.0,
+        1.0,
         2.0
+      ]
+    },
+    {
+      "territoryID": 14,
+      "armies": [
+        2.0
+      ]
+    },
+    {
+      "territoryID": 34,
+      "armies": [
+        1.0
       ]
     },
     {
@@ -32,31 +187,9 @@
       ]
     },
     {
-      "territoryID": 2,
-      "armies": [
-        1.0,
-        1.0
-      ]
-    },
-    {
       "territoryID": 37,
       "armies": [
         1.0
-      ]
-    },
-    {
-      "territoryID": 5,
-      "armies": [
-        2.0,
-        2.0,
-        1.0
-      ]
-    },
-    {
-      "territoryID": 22,
-      "armies": [
-        1.0,
-        2.0
       ]
     },
     {
@@ -73,12 +206,6 @@
     },
     {
       "territoryID": 30,
-      "armies": [
-        2.0
-      ]
-    },
-    {
-      "territoryID": 11,
       "armies": [
         2.0
       ]
@@ -102,31 +229,13 @@
       ]
     },
     {
-      "territoryID": 4,
-      "armies": [
-        2.0
-      ]
-    },
-    {
-      "territoryID": 41,
-      "armies": [
-        2.0
-      ]
-    },
-    {
-      "territoryID": 29,
-      "armies": [
-        1.0
-      ]
-    },
-    {
       "territoryID": 35,
       "armies": [
         1.0
       ]
     },
     {
-      "territoryID": 7,
+      "territoryID": 9,
       "armies": [
         1.0
       ]
@@ -141,18 +250,6 @@
       "territoryID": 6,
       "armies": [
         2.0
-      ]
-    },
-    {
-      "territoryID": 42,
-      "armies": [
-        1.0
-      ]
-    },
-    {
-      "territoryID": 18,
-      "armies": [
-        1.0
       ]
     }
   ]

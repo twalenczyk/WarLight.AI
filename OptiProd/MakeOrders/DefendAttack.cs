@@ -209,7 +209,9 @@ namespace WarLight.Shared.AI.OptiProd.MakeOrders
              * Then, the list of weights will determine how many troops to deploy.
              */
             var territoriesToAttack = ret.Select(pos => pos.To);
-            var dist = this.Bot.Optimizer.OptimizeTurn(territoriesToAttack, DataCollector.currentTurnNumber);
+            if (territoriesToAttack.Count() == 0)
+                return ret;
+            var dist = this.Bot.Optimizer.OptimizeTurn(territoriesToAttack.Distinct());
 
             foreach (var kvp in dist)
             {

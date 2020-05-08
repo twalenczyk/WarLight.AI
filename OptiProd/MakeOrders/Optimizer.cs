@@ -13,19 +13,22 @@ namespace WarLight.Shared.AI.OptiProd.MakeOrders
     {
         private MapModels MapModel;
         private MapDetails Map;
+        private int turnNumber;
 
-        public Optimizer(MapDetails map)
+        public Optimizer(MapDetails map, int turnNumber)
         {
             this.Map = map;
             this.MapModel = new MapModels(map.ID);
+            this.turnNumber = turnNumber;
         }
 
-        public Dictionary<TerritoryIDType, double> OptimizeTurn(IEnumerable<TerritoryIDType> territories, int turnNumber)
+        // make sure territories are distinct
+        public Dictionary<TerritoryIDType, double> OptimizeTurn(IEnumerable<TerritoryIDType> territories)
         {
             var attackPowerMeans = this.MapModel.GetAttackPowerMeans(territories, turnNumber);
-            var attackPowerCovariances = this.MapModel.GetAttackPowerCovariances(territories, turnNumber);
+            var attackPowerCovariances = this.MapModel.GetAttackPowerCovariances(territories, this.turnNumber);
             var defensePowerMeans = this.MapModel.GetDefensePowerMeans(territories, turnNumber);
-            var defensePowerCovariancs = this.MapModel.GetDefensePowerCovariances(territories, turnNumber);
+            var defensePowerCovariancs = this.MapModel.GetDefensePowerCovariances(territories, this.turnNumber);
 
             var apm = DenseVector.OfEnumerable(attackPowerMeans.Values);
             var apc = DenseMatrix.OfRowArrays(attackPowerCovariances.Values
@@ -42,9 +45,11 @@ namespace WarLight.Shared.AI.OptiProd.MakeOrders
                     .Select(bonus => (double)this.Map.Bonuses[bonus].Amount)
                     .Sum()));
 
-            // define the mean vector
+            /*// define the mean vector
             var mu = bonuses - dpm.Multiply(10 / 7) - apm.Multiply(10 / 6); // add vectors for constants like troops at location, bonuses, etc.
-            var G = apc - dpc; // incorrect, I need to calculate these quantities.
+            var G = apc - dpc;*/ // incorrect, I need to calculate these quantities.
+            var mu = dpm;
+            var G = dpc;
 
             // develop (equality-constraint) matrix A
             // For starters, we simply care that the vector sums to 1 (not explicitly worrying about positivity).

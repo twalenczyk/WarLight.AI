@@ -65,6 +65,7 @@ namespace WarLight.Shared.AI
             {
                 gameSettings["MaxCardsHold"] = 999;
                 gameSettings["ReinforcementCard"] = "none";
+                gameSettings["Map"] = 2;
                 //gameSettings["Fog"] = GameFogLevel.NoFog.ToString();
                 //gameSettings["Fog"] = GameFogLevel.ModerateFog.ToString();
                 //gameSettings["Fog"] = GameFogLevel.ExtremeFog.ToString();

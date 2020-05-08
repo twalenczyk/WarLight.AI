@@ -109,10 +109,6 @@ Supported bot names: " + BotFactory.Names.JoinStrings(", "));
                 case "stresstest":
                     StressTest.Go(args.Skip(1).ToArray());
                     break;
-                case "test":
-                    var blank = new Snowbird.BotMain();
-                    blank.TestParser();
-                    break;
                 default:
                     PrintHelp();
                     break;
@@ -138,9 +134,9 @@ Supported bot names: " + BotFactory.Names.JoinStrings(", "));
             AILog.Log("PlayGame", "State=" + game.State + ", numTurns=" + game.NumberOfTurns + ", income=" + game.LatestInfo.Income[playerID] + ", cardsMustUse=" + game.LatestInfo.CardsMustUse);
 
             // Override some settings for the data collector
-            DataCollector.currentGameID = game.ID.GetValue();
+            /*DataCollector.currentGameID = game.ID.GetValue();
             DataCollector.currentTurnNumber = game.NumberOfTurns;
-            DataCollector.currentMapID = map.ID.GetValue();
+            DataCollector.currentMapID = map.ID.GetValue();*/
 
 
             if (game.State == GameState.DistributingTerritories)
